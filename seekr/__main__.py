@@ -7,7 +7,7 @@ import sys
 import threading
 import time
 
-from seekr import api, config, crawler, db, discover, doctor, embed, evaluate, extract, index, rank, search, web
+from seekr import api, config, crawler, db, discover, doctor, embed, evaluate, export, extract, index, rank, search, web
 
 log = logging.getLogger("seekr.live")
 
@@ -126,6 +126,11 @@ def cmd_stats(args):
             print(f"{table + ':':10} {conn.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0]}")
 
 
+def cmd_export(args):
+    counts = export.export(db.connect(), args.out)
+    print(f"Wrote {args.out}: " + ", ".join(f"{table} {count:,}" for table, count in counts.items()))
+
+
 COMMANDS = {
     "crawl": cmd_crawl,
     "index": cmd_index,
@@ -138,6 +143,7 @@ COMMANDS = {
     "eval": cmd_eval,
     "keys": cmd_keys,
     "doctor": cmd_doctor,
+    "export": cmd_export,
 }
 
 
@@ -152,6 +158,8 @@ def main(argv=None):
         command = sub.add_parser(name)
         if name == "crawl":
             command.add_argument("--seeds", help="crawl only the sites in this file (default: seeds.txt + discovered)")
+        if name == "export":
+            command.add_argument("out", help="new database file for serving (no HTML, no crawl queue)")
         if name == "search":
             command.add_argument("query", nargs="+")
         if name == "keys":

@@ -25,11 +25,11 @@ def test_search_engine_picks_up_new_embeddings(tmp_path):
     add_page(conn, 1, "Rust ownership rules")
     embed.embed_chunks(conn)
     engine = search.SearchEngine(conn)
-    assert engine.vectors.chunk_ids == [1]
+    assert list(engine.vectors.chunk_ids) == [1]
     add_page(conn, 2, "Python asyncio event loop")
     embed.embed_chunks(conn)
     engine.refresh()
-    assert engine.vectors.chunk_ids == [1, 2]
+    assert list(engine.vectors.chunk_ids) == [1, 2]
 
 
 def test_live_indexes_while_the_crawl_runs(monkeypatch):
@@ -61,10 +61,10 @@ def test_search_reloads_at_most_every_refresh_seconds(tmp_path, monkeypatch):
     add_page(conn, 2, "Python asyncio event loop")
     embed.embed_chunks(conn)
     engine.search("python", mode="vector")
-    assert engine.vectors.chunk_ids == [1]  # too soon: keep the loaded vectors, so the search stays fast
+    assert list(engine.vectors.chunk_ids) == [1]  # too soon: keep the loaded vectors, so the search stays fast
     monkeypatch.setattr(config, "REFRESH_SECONDS", 0)
     engine.search("python", mode="vector")
-    assert engine.vectors.chunk_ids == [1, 2]
+    assert list(engine.vectors.chunk_ids) == [1, 2]
 
 
 def test_live_keeps_going_when_the_database_is_locked(monkeypatch):

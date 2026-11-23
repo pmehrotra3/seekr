@@ -8,7 +8,7 @@ from seekr import config
 
 PACKAGES = ["httpx", "trafilatura", "torch", "sentence-transformers", "numpy", "fastapi", "uvicorn"]
 # table -> the command that fills it
-TABLES = {"pages": "crawl", "documents": "index", "chunks": "index", "chunks_fts": "index",
+TABLES = {"documents": "index", "chunks": "index", "chunks_fts": "index",
           "embeddings": "index", "pagerank": "rank"}
 
 

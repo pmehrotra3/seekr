@@ -1,23 +1,29 @@
 # Seekr
 
-A small, fully open-source search engine for **developer documentation and engineering blogs**, without SEO spam.
-It runs on your own laptop: a polite crawler, SQLite storage, keyword (BM25) plus semantic (embedding) retrieval,
-and a **relevance score** from a cross-encoder model that reads each result together with your query.
+A small, fully open-source **general web search engine** you can run on one machine and host yourself.
+A polite crawler, SQLite storage, keyword (BM25) plus semantic (embedding) retrieval, PageRank link authority,
+Reciprocal Rank Fusion, and a cross-encoder that reads each result together with your query to score its relevance.
 Search through a clean web page or a REST API with API keys.
 
 **Build it yourself, line by line:** open [`guide.html`](guide.html) in a browser.
 
-| Search quality (22 labelled queries) | MRR@10 | nDCG@10 |
+Phase 1 numbers (4K developer-docs pages, 22 labelled queries; being re-measured on the ~360K-page general index):
+
+| Search quality | MRR@10 | nDCG@10 |
 |---|---|---|
 | Keyword only (BM25) | 0.624 | 0.630 |
 | Semantic only (embeddings) | 0.678 | 0.712 |
 | Hybrid (RRF) | 0.652 | 0.694 |
 | **Hybrid + relevance reranker (Seekr)** | **0.774** | **0.782** |
 
-## Quick start (macOS, Python 3.11+)
+## Quick start (Linux or macOS, Python 3.11+)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
+# PyTorch for your hardware first (pick one):
+pip install torch==2.15.0+xpu --index-url https://download.pytorch.org/whl/xpu   # Intel Arc / Core Ultra GPU
+pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu       # CPU only
+pip install torch==2.15.0                                                         # NVIDIA (Linux) or Apple GPU (macOS)
 pip install -r requirements.txt
 
 python -m seekr crawl     # politely download pages from seeds.txt (about 10 minutes, resumable)
@@ -32,7 +38,7 @@ Check that everything is in place at any time:
 python -m seekr doctor
 ```
 
-Other commands: `stats`, `search <words>` (search from the terminal), `eval` (measure quality),
+Other commands: `export OUT.db` (a slim copy for serving: no raw HTML, no crawl queue), `stats`, `search <words>` (search from the terminal), `eval` (measure quality),
 `keys create NAME [--admin]` (API keys).
 
 ## The REST API
@@ -79,21 +85,27 @@ docker compose up --build                                   # http://localhost:8
 docker compose run --rm seekr python -m seekr crawl         # and index, rank, doctor, keys create NAME
 ```
 
-The database and the downloaded models live in `./data` on your disk. Docker on a Mac cannot use the Apple GPU,
-so inside the container everything runs on the CPU: same results, but a search takes about 1.3–1.5 s instead of
-~0.1 s. Run it natively (Quick start) to use the GPU.
+The database and the downloaded models live in `./data` on your disk. The container runs on the CPU: same results,
+just slower. Run it natively (Quick start) to use a GPU.
+
+Measured on an Intel Core Ultra laptop (Arc 140T iGPU, `python tools/bench_device.py`):
+
+| device | embed chunks/s | rerank top-30 |
+|---|---|---|
+| CPU | 13 | 1112 ms |
+| Intel Arc (XPU, fp16) | 277 | 56 ms |
 
 ## Settings
 
 Everything is in [`seekr/config.py`](seekr/config.py) and can be overridden with environment variables, for example
 `SEEKR_MAX_PAGES_PER_DOMAIN=1000`, `SEEKR_DEVICE=cpu`, `SEEKR_RERANK_MODEL=BAAI/bge-reranker-base`,
-`SEEKR_PORT=9000`, `SEEKR_LOG_LEVEL=DEBUG`.
+`SEEKR_PORT=9000`, `SEEKR_LOG_LEVEL=DEBUG`. See [`.env.example`](.env.example).
 
 ## How it works
 
 ```
 seeds.txt → crawler → SQLite (frontier, pages) → extractor (text, chunks)
-          → FTS5 BM25 index + embeddings (GPU) + PageRank
+          → FTS5 BM25 index + embeddings (GPU; float16 snapshot next to the DB) + PageRank
 query     → BM25 top-100 + vector top-100 → Reciprocal Rank Fusion → best chunk per page
           → cross-encoder relevance (GPU, 0–1) → final score → REST API + web page
 ```

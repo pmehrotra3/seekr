@@ -38,3 +38,33 @@ def test_uses_the_gpu_when_available():
             "mps": torch.backends.mps.is_available()}
     if any(gpus.values()):
         assert gpus[embed.best_device()]
+
+
+def add_vectors(conn, vectors):
+    for chunk_id, vector in vectors.items():
+        conn.execute("INSERT INTO embeddings VALUES (?, ?)", (chunk_id, np.array(vector, np.float32).tobytes()))
+    conn.commit()
+
+
+def test_snapshot_reads_only_new_vectors(tmp_path):
+    conn = db.connect(tmp_path / "t.db")
+    add_vectors(conn, {1: [1.0, 0.0], 2: [0.0, 1.0]})
+    ids, matrix = embed.load_vectors(conn)
+    assert list(ids) == [1, 2] and matrix.dtype == np.float16
+    assert (tmp_path / "t.db.vectors.npy").exists()
+    conn.execute("UPDATE embeddings SET vector = ? WHERE chunk_id = 1", (np.array([9.0, 9.0], np.float32).tobytes(),))
+    add_vectors(conn, {3: [0.6, 0.8]})
+    ids, matrix = embed.load_vectors(conn)
+    assert list(ids) == [1, 2, 3]
+    assert matrix[0].tolist() == [1.0, 0.0]  # row 1 came from the snapshot, not from SQLite
+    assert np.allclose(matrix[2], [0.6, 0.8], atol=1e-3)
+
+
+def test_stale_snapshot_is_rebuilt(tmp_path):
+    conn = db.connect(tmp_path / "t.db")
+    add_vectors(conn, {1: [1.0, 0.0], 2: [0.0, 1.0]})
+    embed.load_vectors(conn)
+    conn.execute("DELETE FROM embeddings")
+    add_vectors(conn, {1: [0.0, 1.0]})
+    ids, matrix = embed.load_vectors(conn)
+    assert list(ids) == [1] and matrix[0].tolist() == [0.0, 1.0]

@@ -336,3 +336,25 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 - Next: when the copy finishes (check `exit 0` in copy-db.log and sizes match), run
   `SEEKR_MAX_PAGES_PER_DOMAIN=4000 python -m seekr crawl --seeds data/seeds-new-2026-11-22.txt` in the background
   (SEEKR_DB default now points at it), then finish embeddings (~820K chunks ≈ 50 min on XPU).
+
+### Iteration 13 — 2026-11-22 — milestone 14 groundwork (copy still running)
+- DB copy USB → NVMe in progress (53 of 170 GB at 21:52, ~43 MB/s). Used this run for work that doesn't touch the DB.
+- **Incident:** `tests/test_cli.py::test_stats_prints_seed_count` opened the default DB path = the half-copied
+  `data/seekr.db` ("malformed"), creating `data/seekr.db-shm` at 21:50:18. The WAL is unchanged (size/mtime), so no
+  checkpoint completed; a partial checkpoint only writes newest page versions that the WAL still holds.
+  **Before first use of the copy:** delete `data/seekr.db-shm` (no process may have the DB open; SQLite rebuilds it from
+  the WAL with nBackfill=0), then `PRAGMA quick_check` in the background. Prevention: `tests/conftest.py` gives every
+  test its own temporary DB (autouse fixture).
+- **Vector snapshot** (`embed.load_vectors`): float16 `<db>.vectors.npy` + `<db>.ids.npy` next to the DB; later loads
+  mmap the snapshot and read only embeddings with a higher chunk id from SQLite (batches of 100K); stale snapshot
+  (DB max id < snapshot max) is rebuilt; written via temp file + rename. `VectorIndex` uses fp16 on GPU, fp32 on CPU.
+  2M × 384 fp16 = 1.6 GB. Tests: snapshot reads only new rows; stale snapshot rebuilt.
+- **`seekr export OUT.db`** (`seekr/export.py`): slim serving DB = English, non-duplicate, non-empty documents + their
+  chunks, embeddings, PageRank, sites; FTS rebuilt; vector snapshot written; VACUUM; refuses to overwrite. Tests added.
+  `doctor` no longer requires the `pages` table (an exported DB has none).
+- README: general web search engine; Linux/macOS quick start with per-hardware PyTorch install (xpu/cpu/default);
+  XPU vs CPU benchmark table; `export`; phase-1 eval numbers labelled as such (being re-measured). Web UI tagline/
+  placeholder no longer say "developer docs".
+- Verified: ruff clean, 83 passed.
+- Next: finish copy → delete shm → quick_check → crawl new seeds (background) → `index` (embeds ~820K chunks on XPU)
+  → `rank` → `export data/serve.db` → measure its size, load time, RAM.
