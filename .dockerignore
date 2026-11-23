@@ -3,3 +3,6 @@ data
 __pycache__
 .pytest_cache
 .git
+models
+.github
+guide.html

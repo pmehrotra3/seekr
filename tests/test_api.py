@@ -93,3 +93,8 @@ def test_rate_limit_returns_429(setup):
     assert client.get("/api/v1/stats", headers=user).status_code == 200
     response = client.get("/api/v1/stats", headers=user)
     assert response.status_code == 429 and response.headers["retry-after"] == "60"
+
+
+def test_health_check_needs_no_key(setup):
+    client, *_ = setup
+    assert client.get("/healthz").json() == {"status": "ok"}

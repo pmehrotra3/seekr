@@ -1,12 +1,13 @@
-# Start:       docker compose up --build        then open http://localhost:8000
-# Other steps: docker compose run --rm seekr python -m seekr crawl    (or index, rank, doctor, keys create NAME)
+# Serve:  docker compose up -d --build     then open http://localhost:8000
+# Needs:  data/serve.db and its snapshot files (python -m seekr export data/serve.db)
+# Keys:   docker compose exec seekr python -m seekr keys create NAME
 services:
   seekr:
     build: .
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data  # the database and downloaded models stay on your disk, outside the container
+      - ./data:/app/data  # the index stays on your disk, outside the container
     environment:
       SEEKR_LOG_LEVEL: INFO
     restart: unless-stopped

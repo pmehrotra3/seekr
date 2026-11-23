@@ -106,7 +106,9 @@ def cmd_serve(args):
     import uvicorn
 
     print(f"Seekr on http://{config.HOST}:{config.PORT}  (search page: /, API docs: /docs)")
-    uvicorn.run(web.create_site(), host=config.HOST, port=config.PORT)
+    # Behind a reverse proxy, trust its X-Forwarded-For so rate limits see each visitor's real IP
+    uvicorn.run(web.create_site(), host=config.HOST, port=config.PORT,
+                proxy_headers=True, forwarded_allow_ips=config.TRUSTED_PROXIES)
 
 
 def cmd_keys(args):

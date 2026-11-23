@@ -186,4 +186,10 @@ def create_app(db_path=None):
     app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["GET", "POST"],
                        allow_headers=["Authorization", "Content-Type"])
     app.include_router(router)
+
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz():
+        """For Docker and load balancers: the server only answers after the index and models are loaded."""
+        return {"status": "ok"}
+
     return app
