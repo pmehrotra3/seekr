@@ -428,3 +428,16 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
   so tuning sees general queries; then try, on dev only: reranker logits instead of sigmoid, rerank text =
   title + best 2 chunks, a general-domain reranker (e.g. BAAI/bge-reranker-base was 3x slower in phase 1),
   hybrid with fewer BM25 candidates. Re-measure test once at the end.
+
+### Iteration 18 — 2026-11-23 — general dev queries + dev-only tuning
+- Crawl of new seeds: nps, ifixit, federalreserve, familyhandyman, bbcgoodfood hit the 4,000 cap; ocw.mit.edu 3,887;
+  nhs 1,316; consumerfinance 219. Still running: law.cornell (crawl-delay 10), uscourts, loc.gov, lonelyplanet.
+  Started a second `index` (background, `data/logs/index2.log`) to make them searchable.
+- +22 general **dev** queries (health, space, animals, history, philosophy, travel, books, time, sport, film,
+  encyclopedia), labelled by URL/title lookup and verified → 80 queries: 56 dev (34 general + 22 tech), 24 test.
+- Dev-only grid (MRR@10 / nDCG@10, 56 dev queries; vector 0.603/0.626, +pagerank 0.641/0.677):
+  temperature T∈{1,3,6} on the cross-encoder logit × RERANK_TOP∈{10,20,30} × W_RETRIEVAL∈{0,.05,.15,.3}.
+  Best: **T=1, top=30, W=0.05 → 0.713/0.726** (= current defaults). top=10, W=0.05 → 0.709/0.715 at 1/3 the rerank
+  cost (useful for CPU hosting). Temperature never helped → setting removed (kept code lean).
+- Next: try a general-domain reranker on dev (BAAI/bge-reranker-base / v2-m3) vs MiniLM-ms-marco; then add queries
+  for the new sites; final test-split measurement once, at the end.

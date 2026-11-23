@@ -56,3 +56,25 @@
 {"query": "http status codes", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status"], "split": "dev"}
 {"query": "docker compose", "relevant": ["https://docs.docker.com/compose/"], "split": "test"}
 {"query": "tcp congestion control rfc", "relevant": ["https://www.rfc-editor.org/info/rfc5681/", "https://www.rfc-editor.org/info/rfc896"], "split": "test"}
+{"query": "migraine headache", "relevant": ["https://medlineplus.gov/migraine.html"], "split": "dev"}
+{"query": "vitamin d deficiency", "relevant": ["https://medlineplus.gov/vitamind.html"], "split": "dev"}
+{"query": "tuberculosis symptoms", "relevant": ["https://www.who.int/news-room/fact-sheets/detail/tuberculosis", "https://www.who.int/health-topics/tuberculosis"], "split": "dev"}
+{"query": "cholera outbreak", "relevant": ["https://www.who.int/news-room/fact-sheets/detail/cholera"], "split": "dev"}
+{"query": "international space station", "relevant": ["https://www.nasa.gov/international-space-station/"], "split": "dev"}
+{"query": "african elephant facts", "relevant": ["https://www.nationalgeographic.com/animals/mammals/facts/african-elephant"], "split": "dev"}
+{"query": "who was cleopatra", "relevant": ["https://www.history.com/articles/cleopatra"], "split": "dev"}
+{"query": "great depression", "relevant": ["https://www.history.com/topics/great-depression"], "split": "dev"}
+{"query": "american civil war", "relevant": ["https://www.history.com/topics/american-civil-war"], "split": "dev"}
+{"query": "existentialism", "relevant": ["https://plato.stanford.edu/entries/existentialism/"], "split": "dev"}
+{"query": "plato theory of forms", "relevant": ["https://plato.stanford.edu/entries/plato-metaphysics/"], "split": "dev"}
+{"query": "rome travel guide", "relevant": ["https://en.wikivoyage.org/wiki/Rome"], "split": "dev"}
+{"query": "visiting new york city", "relevant": ["https://en.wikivoyage.org/wiki/New_York_City"], "split": "dev"}
+{"query": "moby dick ebook", "relevant": ["https://www.gutenberg.org/ebooks/2701"], "split": "dev"}
+{"query": "frankenstein by mary shelley", "relevant": ["https://www.gutenberg.org/ebooks/84"], "split": "dev"}
+{"query": "moon phases calendar", "relevant": ["https://www.timeanddate.com/moon/phases/"], "split": "dev"}
+{"query": "nfl standings", "relevant": ["https://www.espn.com/nfl/standings"], "split": "dev"}
+{"query": "formula 1 race results", "relevant": ["https://www.skysports.com/f1/results"], "split": "dev"}
+{"query": "fantasy books", "relevant": ["https://www.goodreads.com/genres/fantasy"], "split": "dev"}
+{"query": "history of bank robbery", "relevant": ["https://en.wikipedia.org/wiki/Bank_robbery"], "split": "dev"}
+{"query": "douglas dc-8 airliner", "relevant": ["https://en.wikipedia.org/wiki/Douglas_DC-8"], "split": "dev"}
+{"query": "oppenheimer movie reviews", "relevant": ["https://www.rottentomatoes.com/m/oppenheimer_2023"], "split": "dev"}
