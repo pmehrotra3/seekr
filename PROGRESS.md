@@ -441,3 +441,16 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
   cost (useful for CPU hosting). Temperature never helped → setting removed (kept code lean).
 - Next: try a general-domain reranker on dev (BAAI/bge-reranker-base / v2-m3) vs MiniLM-ms-marco; then add queries
   for the new sites; final test-split measurement once, at the end.
+
+### Iteration 19 — 2026-11-23 — new sites indexed, batching fix, reranker comparison
+- 2nd `index`: +27,655 docs (4,535 duplicates, 83 empty), +119,979 chunks, all embedded on xpu.
+- **Bug:** the crawl died with `sqlite3.OperationalError: database is locked`: `build_index` inserted all 120K new chunks
+  into FTS5 in ONE transaction, holding the write lock > the crawler's 60 s busy timeout. Fix: `build_index` commits every
+  5,000 chunks (test added). Restarted the crawl for the 4 unfinished sites only (`data/seeds-remaining.txt`:
+  law.cornell, uscourts, loc.gov, lonelyplanet → `data/logs/crawl-general-2.log`; cornell's crawl-delay 10 → hours).
+- `rank`: **392,958 pages, 44,005,375 links, 4m49s, peak RSS 13.4 GB.**
+- +18 queries on the new sites (food, how-to, repair, Fed, MIT OCW, national parks, NHS, CFPB), alternating dev/test
+  → **98 queries: 65 dev / 33 test.** All labels verified to exist as usable pages.
+- Reranker comparison, **dev only** (65 queries; MRR@10 / nDCG@10 / p50): vector 0.535/0.586/43 ms,
+  +pagerank 0.573/0.631/141 ms; MiniLM-L6 (ms-marco) W=0.05 **0.667/0.697/200 ms**; BAAI/bge-reranker-base W=0.05
+  0.597/0.636/363 ms. → keep MiniLM (better and ~2x faster). Log: `data/logs/reranker-compare-dev.log`.

@@ -14,18 +14,23 @@ STOPWORDS = {"the", "and", "for", "how", "can", "what", "with", "does", "are", "
 TITLE_WEIGHT, TEXT_WEIGHT = 5.0, 1.0  # a word in the title counts 5x more than in the body
 
 
-def build_index(conn):
-    """Add every chunk that isn't indexed yet. Chunk ids only grow, so "new" means id > the last one."""
+def build_index(conn, batch=5000):
+    """Add every chunk that isn't indexed yet. Chunk ids only grow, so "new" means id > the last one.
+    Commits every `batch` chunks, so a running crawl never waits long for the database."""
     conn.executescript(FTS_SCHEMA)
-    last_id = conn.execute("SELECT IFNULL(MAX(rowid), 0) FROM chunks_fts").fetchone()[0]
-    cur = conn.execute(
-        """INSERT INTO chunks_fts (rowid, title, text)
-           SELECT c.id, d.title, c.text FROM chunks c JOIN documents d ON d.id = c.doc_id
-           WHERE c.id > ? ORDER BY c.id""",
-        (last_id,),
-    )
-    conn.commit()
-    return cur.rowcount
+    total = 0
+    while True:
+        last_id = conn.execute("SELECT IFNULL(MAX(rowid), 0) FROM chunks_fts").fetchone()[0]
+        cur = conn.execute(
+            """INSERT INTO chunks_fts (rowid, title, text)
+               SELECT c.id, d.title, c.text FROM chunks c JOIN documents d ON d.id = c.doc_id
+               WHERE c.id > ? ORDER BY c.id LIMIT ?""",
+            (last_id, batch),
+        )
+        conn.commit()
+        total += cur.rowcount
+        if cur.rowcount < batch:
+            return total
 
 
 def to_fts_query(query):

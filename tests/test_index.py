@@ -44,3 +44,14 @@ def test_build_index_is_incremental(tmp_path):
 
 def test_no_words_no_results(tmp_path):
     assert index.keyword_search(make_conn(tmp_path, {"A": "alpha"}), "!!!") == []
+
+
+def test_index_is_built_in_batches(tmp_path):
+    from seekr import db
+
+    conn = db.connect(tmp_path / "t.db")
+    conn.execute("INSERT INTO documents (id, url, title) VALUES (1, 'https://x.com', 'X')")
+    conn.executemany("INSERT INTO chunks (id, doc_id, position, text) VALUES (?, 1, ?, 'word')",
+                     [(i, i) for i in range(1, 8)])
+    assert index.build_index(conn, batch=3) == 7
+    assert index.build_index(conn, batch=3) == 0

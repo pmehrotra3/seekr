@@ -78,3 +78,21 @@
 {"query": "history of bank robbery", "relevant": ["https://en.wikipedia.org/wiki/Bank_robbery"], "split": "dev"}
 {"query": "douglas dc-8 airliner", "relevant": ["https://en.wikipedia.org/wiki/Douglas_DC-8"], "split": "dev"}
 {"query": "oppenheimer movie reviews", "relevant": ["https://www.rottentomatoes.com/m/oppenheimer_2023"], "split": "dev"}
+{"query": "vegetarian lasagne recipes", "relevant": ["https://www.bbcgoodfood.com/recipes/collection/vegetarian-lasagne-recipes"], "split": "dev"}
+{"query": "banana bread recipe", "relevant": ["https://www.bbcgoodfood.com/recipes/vegan-banana-bread", "https://www.bbcgoodfood.com/recipes/brazil-banana-bread", "https://www.bbcgoodfood.com/recipes/brownie-banana-bread"], "split": "test"}
+{"query": "how to install a kitchen faucet", "relevant": ["https://www.familyhandyman.com/list/tips-faucet-installation/", "https://www.familyhandyman.com/house-and-components/fixtures/faucets/"], "split": "dev"}
+{"query": "drywall repair", "relevant": ["https://www.familyhandyman.com/skills/drywalling/"], "split": "test"}
+{"query": "replace iphone 13 battery", "relevant": ["https://www.ifixit.com/Guide/iPhone+13+Battery+Replacement/145896"], "split": "dev"}
+{"query": "federal open market committee", "relevant": ["https://www.federalreserve.gov/monetarypolicy/fomc.htm"], "split": "test"}
+{"query": "open market operations", "relevant": ["https://www.federalreserve.gov/monetarypolicy/openmarket.htm"], "split": "dev"}
+{"query": "mit linear algebra course", "relevant": ["https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/", "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/"], "split": "test"}
+{"query": "learn python programming course mit", "relevant": ["https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/"], "split": "dev"}
+{"query": "yellowstone national park", "relevant": ["https://www.nps.gov/yell/index.htm"], "split": "test"}
+{"query": "grand canyon visit", "relevant": ["https://www.nps.gov/grca/"], "split": "dev"}
+{"query": "yosemite national park", "relevant": ["https://www.nps.gov/yose/"], "split": "test"}
+{"query": "flu symptoms", "relevant": ["https://www.nhs.uk/conditions/flu/"], "split": "dev"}
+{"query": "chickenpox in children", "relevant": ["https://www.nhs.uk/conditions/chickenpox/"], "split": "test"}
+{"query": "lower back pain", "relevant": ["https://www.nhs.uk/conditions/back-pain/"], "split": "dev"}
+{"query": "can't sleep insomnia", "relevant": ["https://www.nhs.uk/conditions/insomnia/"], "split": "test"}
+{"query": "debt collector rights", "relevant": ["https://www.consumerfinance.gov/consumer-tools/debt-collection/", "https://www.consumerfinance.gov/consumer-tools/debt-collection/answers/"], "split": "dev"}
+{"query": "how mortgages work", "relevant": ["https://www.consumerfinance.gov/consumer-tools/mortgages/", "https://www.consumerfinance.gov/consumer-tools/mortgages/answers/basics/"], "split": "test"}
