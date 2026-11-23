@@ -358,3 +358,17 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 - Verified: ruff clean, 83 passed.
 - Next: finish copy → delete shm → quick_check → crawl new seeds (background) → `index` (embeds ~820K chunks on XPU)
   → `rank` → `export data/serve.db` → measure its size, load time, RAM.
+
+### Iteration 14 — 2026-11-22 — DB on NVMe; crawl + embedding running
+- Copy finished: `exit 0`, 63m31s; sizes identical to the USB originals (db 155,612,307,456; wal 13,963,252,712).
+- Deleted stale `data/seekr.db-shm` (nothing had the DB open), then `PRAGMA quick_check` → **ok** (697 s on NVMe).
+  Counts match the source: embeddings 1,253,899, max chunk id 2,071,359. Closing that connection checkpointed the
+  WAL: `data/seekr.db` is now one 157 GB file. The USB copy is untouched (backup).
+- Eval upgrades (commit 306f268): stage `pagerank` (= RRF + `W_RRF_PAGERANK`·PageRank, no cross-encoder), p50/p95
+  latency per stage, `eval --split dev|test`. 86 tests pass. 54 general draft queries written (labels next).
+- Started (background, on `data/seekr.db`):
+  - `SEEKR_MAX_PAGES_PER_DOMAIN=4000 python -m seekr crawl --seeds data/seeds-new-2026-11-22.txt` → `data/logs/crawl-general.log`
+  - `python -m seekr index` → `data/logs/index.log`: extracted 1,283 new docs (218 duplicates), +7,025 FTS chunks,
+    now embedding on **xpu** at ~170 chunks/s in production (~828K backlog ≈ 80 min).
+- Seen: instructables.com and oyez.org stop at 1 page (JS-rendered, no crawlable links). loc.gov /collections/ 403.
+- Next: per-host crawl counts; when embedding is done → `rank` → label eval queries (verify each URL exists).
