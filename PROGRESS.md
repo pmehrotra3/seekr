@@ -478,3 +478,12 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
   reverse proxy + trusted proxies). compose now publishes on 127.0.0.1 only. README hosting section links to it.
 - guide.html frozen per user decision (a). 90 tests pass.
 - Remaining crawl (cornell/uscourts/loc.gov) still running in the background.
+
+### Iteration 21 — 2026-11-23 — crawl stopped, final build started
+- Remaining crawl at 01:49: law.cornell 930 done (12,729 queued; crawl-delay 10 → ~30 more hours for the cap),
+  uscourts 3,692 (1,719 "failed" = 200 responses that weren't HTML: downloads without an extension),
+  loc.gov 504 done / **699 × 403 Forbidden** → it refuses our crawler. Stopped the crawl (politeness + enough coverage)
+  and removed loc.gov from seeds.txt (97 seeds).
+- Final build running in the background: `index` → `rank` → `export data/serve.db` (`data/logs/final-pipeline.log`).
+- Next: final eval on serve.db — all/dev/test on xpu, and test latency on cpu — the single held-out measurement;
+  then README + resume line from those numbers (milestone 17).

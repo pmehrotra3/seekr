@@ -97,7 +97,6 @@ https://www.familyhandyman.com/
 https://www.ifixit.com/Guide
 # General web: education, history, health, travel
 https://ocw.mit.edu/
-https://www.loc.gov/
 https://www.nps.gov/
 https://www.nhs.uk/conditions/
 https://www.lonelyplanet.com/
