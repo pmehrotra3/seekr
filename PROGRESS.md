@@ -372,3 +372,17 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
     now embedding on **xpu** at ~170 chunks/s in production (~828K backlog ≈ 80 min).
 - Seen: instructables.com and oyez.org stop at 1 page (JS-rendered, no crawlable links). loc.gov /collections/ 403.
 - Next: per-host crawl counts; when embedding is done → `rank` → label eval queries (verify each URL exists).
+
+### Iteration 15 — 2026-11-22 — eval labels (milestone 15)
+- Jobs healthy: index embedding on xpu at ~170 chunks/s (82,944 of ~828K at 22:50); crawl of new seeds ~1 page/s/host
+  (e.g. nps 341, ocw 336, federalreserve 325, nhs 312 done; consumerfinance finished its scope at 219;
+  law.cornell 35 (crawl-delay 10); loc.gov mostly 403/failed (50); oyez/instructables 1 page (JS sites)).
+- `evals/queries.jsonl`: 22 → **58 queries**, each with a `split`. The 22 phase-1 tech queries are `dev` (weights were
+  tuned on them). 36 new general queries (health, science, nature, news, sport, music, film, books, philosophy,
+  history, encyclopedia, dictionary, travel, time, finance, tech): every 3rd `dev`, the rest `test` → 34 dev / 24 test.
+- Labelling method: relevant URLs chosen by URL/title lookup in `documents` (what a person would want for the
+  query), **not** from Seekr's ranked output; every URL verified to exist as a usable page (word_count>0, not a
+  duplicate). Queries whose ideal page isn't in the corpus were reworded to an answerable need or dropped
+  (Einstein/Photosynthesis are not crawled; Perseverance/CDN/LLM had no clear canonical page).
+- Pending queries for the new sites (law, Fed, food, how-to, MIT OCW, NPS, NHS) once they're indexed.
+- 87 tests pass.

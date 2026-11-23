@@ -35,3 +35,9 @@ def test_evaluate_reports_every_stage_with_latency():
     assert list(report) == evaluate.MODES
     assert report["full"][0] == 1.0 and report["bm25"][0] == 0.5
     assert all(p50 >= 0 and p95 >= p50 for _, _, p50, p95 in report.values())
+
+
+def test_eval_queries_have_a_split():
+    queries = evaluate.load_queries()
+    assert len(queries) >= 50
+    assert {item["split"] for item in queries} == {"dev", "test"}

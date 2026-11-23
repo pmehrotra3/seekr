@@ -1,22 +1,58 @@
-{"query": "python asyncio event loop", "relevant": ["https://docs.python.org/3/library/asyncio-eventloop.html", "https://docs.python.org/3/library/asyncio-task.html"]}
-{"query": "sqlite full text search", "relevant": ["https://www.sqlite.org/fts5.html"]}
-{"query": "css flexbox", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts"]}
-{"query": "rust ownership", "relevant": ["https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html", "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html"]}
-{"query": "postgres indexes", "relevant": ["https://www.postgresql.org/docs/current/indexes.html"]}
-{"query": "fastapi dependency injection", "relevant": ["https://fastapi.tiangolo.com/tutorial/dependencies/"]}
-{"query": "django models", "relevant": ["https://docs.djangoproject.com/en/6.1/topics/db/models/"]}
-{"query": "go modules dependencies", "relevant": ["https://go.dev/doc/modules/managing-dependencies", "https://go.dev/doc/modules/gomod-ref"]}
-{"query": "rust error handling", "relevant": ["https://doc.rust-lang.org/book/ch09-00-error-handling.html", "https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html"]}
-{"query": "sqlite write ahead log", "relevant": ["https://www.sqlite.org/wal.html"]}
-{"query": "go garbage collector tuning", "relevant": ["https://go.dev/doc/gc-guide"]}
-{"query": "python regular expressions", "relevant": ["https://docs.python.org/3/library/re.html"]}
-{"query": "django url routing", "relevant": ["https://docs.djangoproject.com/en/6.1/topics/http/urls/"]}
-{"query": "fastapi oauth2 jwt", "relevant": ["https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/"]}
-{"query": "how do I free memory without a garbage collector", "relevant": ["https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html", "https://doc.rust-lang.org/book/ch15-03-drop.html"]}
-{"query": "how can my program recover when something goes wrong in rust", "relevant": ["https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html", "https://doc.rust-lang.org/book/ch09-00-error-handling.html"]}
-{"query": "how do I run several tasks at the same time in python", "relevant": ["https://docs.python.org/3/library/asyncio-task.html", "https://docs.python.org/3/library/concurrent.futures.html"]}
-{"query": "my database queries are slow, how do I make them faster", "relevant": ["https://www.postgresql.org/docs/current/indexes.html", "https://www.postgresql.org/docs/current/performance-tips.html"]}
-{"query": "how do I come up with a good idea for a startup", "relevant": ["https://paulgraham.com/startupideas.html"]}
-{"query": "how should I organize and publish my go code so others can use it", "relevant": ["https://go.dev/doc/modules/layout", "https://go.dev/doc/modules/publishing", "https://go.dev/doc/tutorial/create-module.html"]}
-{"query": "let users log in with a username and password in my python web api", "relevant": ["https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/", "https://fastapi.tiangolo.com/tutorial/security/first-steps/"]}
-{"query": "make boxes sit side by side and wrap onto the next line on small screens", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts"]}
+{"query": "python asyncio event loop", "relevant": ["https://docs.python.org/3/library/asyncio-eventloop.html", "https://docs.python.org/3/library/asyncio-task.html"], "split": "dev"}
+{"query": "sqlite full text search", "relevant": ["https://www.sqlite.org/fts5.html"], "split": "dev"}
+{"query": "css flexbox", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts"], "split": "dev"}
+{"query": "rust ownership", "relevant": ["https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html", "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html"], "split": "dev"}
+{"query": "postgres indexes", "relevant": ["https://www.postgresql.org/docs/current/indexes.html"], "split": "dev"}
+{"query": "fastapi dependency injection", "relevant": ["https://fastapi.tiangolo.com/tutorial/dependencies/"], "split": "dev"}
+{"query": "django models", "relevant": ["https://docs.djangoproject.com/en/6.1/topics/db/models/"], "split": "dev"}
+{"query": "go modules dependencies", "relevant": ["https://go.dev/doc/modules/managing-dependencies", "https://go.dev/doc/modules/gomod-ref"], "split": "dev"}
+{"query": "rust error handling", "relevant": ["https://doc.rust-lang.org/book/ch09-00-error-handling.html", "https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html"], "split": "dev"}
+{"query": "sqlite write ahead log", "relevant": ["https://www.sqlite.org/wal.html"], "split": "dev"}
+{"query": "go garbage collector tuning", "relevant": ["https://go.dev/doc/gc-guide"], "split": "dev"}
+{"query": "python regular expressions", "relevant": ["https://docs.python.org/3/library/re.html"], "split": "dev"}
+{"query": "django url routing", "relevant": ["https://docs.djangoproject.com/en/6.1/topics/http/urls/"], "split": "dev"}
+{"query": "fastapi oauth2 jwt", "relevant": ["https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/"], "split": "dev"}
+{"query": "how do I free memory without a garbage collector", "relevant": ["https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html", "https://doc.rust-lang.org/book/ch15-03-drop.html"], "split": "dev"}
+{"query": "how can my program recover when something goes wrong in rust", "relevant": ["https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html", "https://doc.rust-lang.org/book/ch09-00-error-handling.html"], "split": "dev"}
+{"query": "how do I run several tasks at the same time in python", "relevant": ["https://docs.python.org/3/library/asyncio-task.html", "https://docs.python.org/3/library/concurrent.futures.html"], "split": "dev"}
+{"query": "my database queries are slow, how do I make them faster", "relevant": ["https://www.postgresql.org/docs/current/indexes.html", "https://www.postgresql.org/docs/current/performance-tips.html"], "split": "dev"}
+{"query": "how do I come up with a good idea for a startup", "relevant": ["https://paulgraham.com/startupideas.html"], "split": "dev"}
+{"query": "how should I organize and publish my go code so others can use it", "relevant": ["https://go.dev/doc/modules/layout", "https://go.dev/doc/modules/publishing", "https://go.dev/doc/tutorial/create-module.html"], "split": "dev"}
+{"query": "let users log in with a username and password in my python web api", "relevant": ["https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/", "https://fastapi.tiangolo.com/tutorial/security/first-steps/"], "split": "dev"}
+{"query": "make boxes sit side by side and wrap onto the next line on small screens", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts"], "split": "dev"}
+{"query": "symptoms of type 2 diabetes", "relevant": ["https://medlineplus.gov/diabetestype2.html", "https://medlineplus.gov/diabetes.html"], "split": "dev"}
+{"query": "high blood pressure treatment", "relevant": ["https://medlineplus.gov/highbloodpressure.html", "https://medlineplus.gov/ency/article/000468.htm", "https://medlineplus.gov/ency/article/007484.htm"], "split": "test"}
+{"query": "measles vaccine", "relevant": ["https://www.who.int/health-topics/measles", "https://www.who.int/news-room/fact-sheets/detail/measles"], "split": "test"}
+{"query": "malaria", "relevant": ["https://www.who.int/health-topics/malaria", "https://www.who.int/news-room/fact-sheets/detail/malaria"], "split": "dev"}
+{"query": "how much sleep do adults need", "relevant": ["https://medlineplus.gov/healthysleep.html"], "split": "test"}
+{"query": "how do black holes form", "relevant": ["https://www.nasa.gov/learning-resources/for-kids-and-students/what-is-a-black-hole-grades-5-8/", "https://www.nasa.gov/learning-resources/for-kids-and-students/what-is-a-black-hole-grades-k-4/"], "split": "test"}
+{"query": "james webb space telescope", "relevant": ["https://www.nasa.gov/gallery/james-webb-space-telescope/"], "split": "dev"}
+{"query": "crispr gene editing", "relevant": ["https://www.scientificamerican.com/crispr/"], "split": "test"}
+{"query": "largest animal on earth", "relevant": ["https://www.nationalgeographic.com/animals/mammals/facts/blue-whale"], "split": "test"}
+{"query": "russia ukraine war latest", "relevant": ["https://www.aljazeera.com/where/ukraine/", "https://www.aljazeera.com/tag/ukraine-russia-crisis/"], "split": "dev"}
+{"query": "india election results", "relevant": ["https://www.thehindu.com/elections/results/", "https://www.thehindu.com/elections/lok-sabha/"], "split": "test"}
+{"query": "cricket news", "relevant": ["https://www.skysports.com/cricket/news", "https://www.skysports.com/cricket"], "split": "test"}
+{"query": "premier league table", "relevant": ["https://www.skysports.com/premier-league-table"], "split": "dev"}
+{"query": "who won the 2026 nba finals", "relevant": ["https://www.espn.com/nba/story/_/id/49056824/new-york-knicks-win-2026-nba-finals-san-antonio-spurs-game-5-brunson-towns-wembanyama"], "split": "test"}
+{"query": "taylor swift", "relevant": ["https://www.billboard.com/artist/taylor-swift/"], "split": "test"}
+{"query": "best new albums", "relevant": ["https://pitchfork.com/reviews/best/albums/", "https://pitchfork.com/best/"], "split": "dev"}
+{"query": "films voted the best of all time", "relevant": ["https://en.wikipedia.org/wiki/List_of_films_voted_the_best"], "split": "test"}
+{"query": "pride and prejudice ebook", "relevant": ["https://www.gutenberg.org/ebooks/1342", "https://www.gutenberg.org/ebooks/20686", "https://www.gutenberg.org/ebooks/20687", "https://www.gutenberg.org/ebooks/26301", "https://www.gutenberg.org/ebooks/42671"], "split": "test"}
+{"query": "sherlock holmes stories", "relevant": ["https://www.gutenberg.org/ebooks/1661", "https://www.gutenberg.org/ebooks/9551", "https://www.gutenberg.org/ebooks/9553", "https://www.gutenberg.org/ebooks/9555", "https://www.gutenberg.org/ebooks/28733", "https://www.gutenberg.org/ebooks/48320"], "split": "dev"}
+{"query": "kant categorical imperative", "relevant": ["https://plato.stanford.edu/entries/kant-moral/"], "split": "test"}
+{"query": "do humans have free will", "relevant": ["https://plato.stanford.edu/entries/freewill/", "https://plato.stanford.edu/archives/sum2022/entries/freewill/", "https://plato.stanford.edu/archives/spr2002/entries/freewill/"], "split": "test"}
+{"query": "utilitarianism", "relevant": ["https://plato.stanford.edu/entries/consequentialism/", "https://plato.stanford.edu/entries/consequentialism-rule/"], "split": "dev"}
+{"query": "causes of world war 2", "relevant": ["https://www.history.com/topics/world-war-ii"], "split": "test"}
+{"query": "french revolution", "relevant": ["https://www.history.com/topics/french-revolution", "https://www.history.com/articles/french-revolution-key-players"], "split": "test"}
+{"query": "how were the egyptian pyramids built", "relevant": ["https://www.history.com/articles/the-egyptian-pyramids", "https://www.history.com/topics/ancient-egypt"], "split": "dev"}
+{"query": "space shuttle challenger disaster", "relevant": ["https://en.wikipedia.org/wiki/Space_Shuttle_Challenger"], "split": "test"}
+{"query": "helmut kohl", "relevant": ["https://en.wikipedia.org/wiki/Helmut_Kohl"], "split": "test"}
+{"query": "taboo meaning", "relevant": ["https://en.wiktionary.org/wiki/taboo"], "split": "dev"}
+{"query": "things to do in tokyo", "relevant": ["https://en.wikivoyage.org/wiki/Tokyo"], "split": "test"}
+{"query": "paris travel guide", "relevant": ["https://en.wikivoyage.org/wiki/Paris"], "split": "test"}
+{"query": "time zone converter", "relevant": ["https://www.timeanddate.com/worldclock/converter.html", "https://www.timeanddate.com/worldclock/converter-classic.html"], "split": "dev"}
+{"query": "when does daylight saving time end", "relevant": ["https://www.timeanddate.com/time/dst/", "https://www.timeanddate.com/time/change/usa"], "split": "test"}
+{"query": "check my credit report and score", "relevant": ["https://www.consumerfinance.gov/consumer-tools/credit-reports-and-scores/"], "split": "test"}
+{"query": "http status codes", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status"], "split": "dev"}
+{"query": "docker compose", "relevant": ["https://docs.docker.com/compose/"], "split": "test"}
+{"query": "tcp congestion control rfc", "relevant": ["https://www.rfc-editor.org/info/rfc5681/", "https://www.rfc-editor.org/info/rfc896"], "split": "test"}
