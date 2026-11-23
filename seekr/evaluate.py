@@ -1,12 +1,14 @@
 """Measure search quality on hand-labelled queries: MRR@10 and nDCG@10 for each way of searching."""
 import json
 import math
+import time
 from pathlib import Path
 
 from seekr import config
 
 QUERIES_FILE = config.ROOT / "evals" / "queries.jsonl"
-MODES = ["bm25", "vector", "hybrid", "full"]  # full = hybrid + cross-encoder relevance + final score
+# hybrid = BM25 + vectors fused with RRF; pagerank = hybrid + link authority; full = + cross-encoder + final score
+MODES = ["bm25", "vector", "hybrid", "pagerank", "full"]
 
 
 def reciprocal_rank(urls, relevant):
@@ -28,14 +30,22 @@ def load_queries(path=QUERIES_FILE):
     return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
 
 
+def percentile(values, p):
+    ordered = sorted(values)
+    return ordered[min(len(ordered) - 1, int(p / 100 * len(ordered)))]
+
+
 def evaluate(engine, queries):
-    """Returns {mode: (MRR@10, nDCG@10)}, averaged over all queries."""
+    """Returns {mode: (MRR@10, nDCG@10, p50 ms, p95 ms)}, averaged over all queries."""
     report = {}
     for mode in MODES:
         mrr = total_ndcg = 0.0
+        times = []
         for item in queries:
+            start = time.perf_counter()
             urls = [result["url"] for result in engine.search(item["query"], limit=10, mode=mode)]
+            times.append((time.perf_counter() - start) * 1000)
             mrr += reciprocal_rank(urls, set(item["relevant"]))
             total_ndcg += ndcg(urls, set(item["relevant"]))
-        report[mode] = (mrr / len(queries), total_ndcg / len(queries))
+        report[mode] = (mrr / len(queries), total_ndcg / len(queries), percentile(times, 50), percentile(times, 95))
     return report

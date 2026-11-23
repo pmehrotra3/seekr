@@ -18,3 +18,20 @@ def test_eval_file_is_valid():
     queries = evaluate.load_queries()
     assert len(queries) >= 20
     assert all(item["query"] and item["relevant"] for item in queries)
+
+
+def test_percentile():
+    assert evaluate.percentile([5, 1, 3, 2, 4], 50) == 3
+    assert evaluate.percentile(list(range(1, 101)), 95) == 96
+
+
+class FakeEngine:
+    def search(self, query, limit, mode):
+        return [{"url": "https://good"}] if mode == "full" else [{"url": "https://bad"}, {"url": "https://good"}]
+
+
+def test_evaluate_reports_every_stage_with_latency():
+    report = evaluate.evaluate(FakeEngine(), [{"query": "q", "relevant": ["https://good"]}])
+    assert list(report) == evaluate.MODES
+    assert report["full"][0] == 1.0 and report["bm25"][0] == 0.5
+    assert all(p50 >= 0 and p95 >= p50 for _, _, p50, p95 in report.values())

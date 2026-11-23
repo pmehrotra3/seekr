@@ -79,3 +79,10 @@ def test_snippet_starts_on_a_whole_word():
 def test_common_words_are_not_highlighted():
     snippet = search.highlight("How the event loop runs the tasks", "how does the event loop run")
     assert "<mark>event</mark>" in snippet and "<mark>the</mark>" not in snippet and "<mark>How</mark>" not in snippet
+
+
+def test_pagerank_stage_breaks_ties_by_link_authority(engine):
+    hybrid = engine.search("pasta", mode="hybrid")
+    with_links = engine.search("pasta", mode="pagerank")
+    assert {r["url"] for r in hybrid} == {r["url"] for r in with_links}  # same pages, maybe reordered
+    assert with_links[0]["relevance"] is None  # no cross-encoder in this stage

@@ -95,9 +95,9 @@ class SearchEngine:
     def candidates(self, query, mode="full", site=None):
         """Best chunk per page from BM25 and/or vectors, fused with RRF. English pages only."""
         rankings = {}
-        if mode in ("bm25", "hybrid", "full"):
+        if mode in ("bm25", "hybrid", "pagerank", "full"):
             rankings["bm25"] = index.keyword_search(self.conn, query, config.CANDIDATES)
-        if mode in ("vector", "hybrid", "full"):
+        if mode in ("vector", "hybrid", "pagerank", "full"):
             rankings["vector"] = self.vectors.search(embed.embed_query(query), config.CANDIDATES)
         fused, ranks = rrf(rankings)
         pages, seen = [], set()
@@ -109,7 +109,7 @@ class SearchEngine:
             if site and host != site and not host.endswith("." + site):
                 continue
             seen.add(page["doc_id"])
-            pages.append({**page, "ranks": ranks[chunk_id]})
+            pages.append({**page, "ranks": ranks[chunk_id], "rrf": fused[chunk_id]})
         return pages
 
     def rerank(self, query, pages):
@@ -139,6 +139,9 @@ class SearchEngine:
         if time.monotonic() - self.refreshed_at > config.REFRESH_SECONDS:  # reloading takes seconds on a big index
             self.refresh()
         pages = self.candidates(query, mode, site)
+        if mode == "pagerank":  # hybrid + link authority, no cross-encoder: shows what PageRank adds on its own
+            pages.sort(key=lambda page: page["rrf"] + config.W_RRF_PAGERANK * self.pagerank.get(page["doc_id"], 0.0),
+                       reverse=True)
         if mode == "full":
             pages = self.rerank(query, pages[: config.RERANK_TOP])
         return [self.to_result(page, query) for page in pages[offset : offset + limit]]

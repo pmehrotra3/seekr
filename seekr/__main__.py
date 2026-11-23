@@ -93,9 +93,13 @@ def cmd_search(args):
 def cmd_eval(args):
     engine = search.SearchEngine(db.connect())
     queries = evaluate.load_queries()
-    print(f"{len(queries)} queries   {'MRR@10':>7} {'nDCG@10':>8}")
-    for mode, (mrr, ndcg) in evaluate.evaluate(engine, queries).items():
-        print(f"{mode:18} {mrr:7.3f} {ndcg:8.3f}")
+    if args.split:
+        queries = [item for item in queries if item.get("split") == args.split]
+    print(f"{len(queries)} queries on {embed.best_device()}")
+    print(f"{'stage':10} {'MRR@10':>7} {'nDCG@10':>8} {'p50 ms':>7} {'p95 ms':>7}")
+    engine.search("warm up", mode="full")  # loads the models
+    for mode, (mrr, ndcg, p50, p95) in evaluate.evaluate(engine, queries).items():
+        print(f"{mode:10} {mrr:7.3f} {ndcg:8.3f} {p50:7.0f} {p95:7.0f}")
 
 
 def cmd_serve(args):
@@ -158,6 +162,8 @@ def main(argv=None):
         command = sub.add_parser(name)
         if name == "crawl":
             command.add_argument("--seeds", help="crawl only the sites in this file (default: seeds.txt + discovered)")
+        if name == "eval":
+            command.add_argument("--split", choices=["dev", "test"], help="only the dev (tuning) or test queries")
         if name == "export":
             command.add_argument("out", help="new database file for serving (no HTML, no crawl queue)")
         if name == "search":
