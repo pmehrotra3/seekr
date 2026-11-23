@@ -156,7 +156,7 @@ COMMANDS = {
 def main(argv=None):
     logging.basicConfig(level=config.LOG_LEVEL, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
                         datefmt="%H:%M:%S")
-    for noisy in ("sentence_transformers", "httpx", "httpx2"):  # progress bars and one line per HTTP request
+    for noisy in ("sentence_transformers", "httpx", "httpx2", "huggingface_hub"):  # progress bars and one line per HTTP request
         logging.getLogger(noisy).setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(prog="seekr", description="Seekr search engine")
     sub = parser.add_subparsers(dest="command", required=True)
