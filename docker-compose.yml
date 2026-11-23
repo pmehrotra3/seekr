@@ -1,0 +1,12 @@
+# Start:       docker compose up --build        then open http://localhost:8000
+# Other steps: docker compose run --rm seekr python -m seekr crawl    (or index, rank, doctor, keys create NAME)
+services:
+  seekr:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data  # the database and downloaded models stay on your disk, outside the container
+    environment:
+      SEEKR_LOG_LEVEL: INFO
+    restart: unless-stopped

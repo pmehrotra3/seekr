@@ -1,0 +1,29 @@
+[project]
+name = "seekr"
+version = "0.2.0"
+description = "A small, self-hostable general web search engine: BM25 + embeddings, PageRank, rank fusion, cross-encoder reranking."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+# Exact pins live in requirements.txt. PyTorch is installed separately for your hardware (see README).
+dependencies = ["httpx", "trafilatura", "torch", "sentence-transformers", "numpy", "fastapi", "uvicorn"]
+
+[project.scripts]
+seekr = "seekr.__main__:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["seekr"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["B008"]  # FastAPI's Depends(...) in default arguments is the intended style
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,22 @@
+{"query": "python asyncio event loop", "relevant": ["https://docs.python.org/3/library/asyncio-eventloop.html", "https://docs.python.org/3/library/asyncio-task.html"]}
+{"query": "sqlite full text search", "relevant": ["https://www.sqlite.org/fts5.html"]}
+{"query": "css flexbox", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts"]}
+{"query": "rust ownership", "relevant": ["https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html", "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html"]}
+{"query": "postgres indexes", "relevant": ["https://www.postgresql.org/docs/current/indexes.html"]}
+{"query": "fastapi dependency injection", "relevant": ["https://fastapi.tiangolo.com/tutorial/dependencies/"]}
+{"query": "django models", "relevant": ["https://docs.djangoproject.com/en/6.1/topics/db/models/"]}
+{"query": "go modules dependencies", "relevant": ["https://go.dev/doc/modules/managing-dependencies", "https://go.dev/doc/modules/gomod-ref"]}
+{"query": "rust error handling", "relevant": ["https://doc.rust-lang.org/book/ch09-00-error-handling.html", "https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html"]}
+{"query": "sqlite write ahead log", "relevant": ["https://www.sqlite.org/wal.html"]}
+{"query": "go garbage collector tuning", "relevant": ["https://go.dev/doc/gc-guide"]}
+{"query": "python regular expressions", "relevant": ["https://docs.python.org/3/library/re.html"]}
+{"query": "django url routing", "relevant": ["https://docs.djangoproject.com/en/6.1/topics/http/urls/"]}
+{"query": "fastapi oauth2 jwt", "relevant": ["https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/"]}
+{"query": "how do I free memory without a garbage collector", "relevant": ["https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html", "https://doc.rust-lang.org/book/ch15-03-drop.html"]}
+{"query": "how can my program recover when something goes wrong in rust", "relevant": ["https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html", "https://doc.rust-lang.org/book/ch09-00-error-handling.html"]}
+{"query": "how do I run several tasks at the same time in python", "relevant": ["https://docs.python.org/3/library/asyncio-task.html", "https://docs.python.org/3/library/concurrent.futures.html"]}
+{"query": "my database queries are slow, how do I make them faster", "relevant": ["https://www.postgresql.org/docs/current/indexes.html", "https://www.postgresql.org/docs/current/performance-tips.html"]}
+{"query": "how do I come up with a good idea for a startup", "relevant": ["https://paulgraham.com/startupideas.html"]}
+{"query": "how should I organize and publish my go code so others can use it", "relevant": ["https://go.dev/doc/modules/layout", "https://go.dev/doc/modules/publishing", "https://go.dev/doc/tutorial/create-module.html"]}
+{"query": "let users log in with a username and password in my python web api", "relevant": ["https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/", "https://fastapi.tiangolo.com/tutorial/security/first-steps/"]}
+{"query": "make boxes sit side by side and wrap onto the next line on small screens", "relevant": ["https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts"]}
