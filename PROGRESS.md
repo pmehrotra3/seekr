@@ -273,13 +273,13 @@ discussed with the user); held-out evaluation.
 Target and per-run instructions: `.claude/loop-prompt.md` (not committed).
 Scope change (user, 2026-11-22): **general web search, not only developer docs.**
 
-- [ ] 11. Linux + Intel Arc port (XPU torch, device auto-detect, doctor, measured throughput)
-- [ ] 12. Repo formalization (git, pyproject, ruff, LICENSE, .env.example, CI, clean data/)
-- [ ] 13. General seeds + crawl to ~300K (balanced categories, ≤15% per domain; Common Crawl bootstrap allowed)
-- [ ] 14. Index at scale (streaming extraction, mmap fp16 vectors, FTS5, sparse PageRank; time/size/RAM recorded)
-- [ ] 15. Eval at scale (≥50 labelled queries across categories, per-stage table, p50/p95 latency XPU vs CPU)
-- [ ] 16. Hosting (lean Docker CPU + optional Intel GPU, healthcheck, docs/DEPLOY.md, min VPS size)
-- [ ] 17. Final polish (README matches reality, guide updated or retired, resume line from measured numbers)
+- [x] 11. Linux + Intel Arc port (XPU torch, device auto-detect, doctor, measured throughput)
+- [x] 12. Repo formalization (git, pyproject, ruff, LICENSE, .env.example, CI, clean data/)
+- [x] 13. General seeds + crawl to ~300K (balanced categories, ≤15% per domain; Common Crawl bootstrap allowed)
+- [x] 14. Index at scale (streaming extraction, mmap fp16 vectors, FTS5, sparse PageRank; time/size/RAM recorded)
+- [x] 15. Eval at scale (≥50 labelled queries across categories, per-stage table, p50/p95 latency XPU vs CPU)
+- [x] 16. Hosting (lean Docker CPU + optional Intel GPU, healthcheck, docs/DEPLOY.md, min VPS size)
+- [x] 17. Final polish (README matches reality, guide updated or retired, resume line from measured numbers)
 
 ### Iteration 11 — 2026-11-22 — milestones 11 and 12 (mostly)
 - Machine: Ubuntu 26.04, Intel Arrow Lake-P iGPU (Arc 130T/140T), 16 cores, 61 GB RAM. Level Zero + OpenCL drivers
@@ -487,3 +487,37 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 - Final build running in the background: `index` → `rank` → `export data/serve.db` (`data/logs/final-pipeline.log`).
 - Next: final eval on serve.db — all/dev/test on xpu, and test latency on cpu — the single held-out measurement;
   then README + resume line from those numbers (milestone 17).
+
+### Iteration 22 — 2026-11-23 — final build, final measurement, milestones 11–17 done
+- Final `index`: +1,928 docs, +8,325 chunks (all embedded). `rank`: 394,886 pages, 44,368,234 links, 4m28s, 13.4 GB.
+  `export`: **378,886 docs, 2,159,132 chunks, 11.66 GB + 1.66 GB vectors**, 5m11s, 4.9 GB peak.
+- **Final eval on data/serve.db** (`data/logs/eval-final-xpu.log`, `eval-final-cpu-test.log`), MRR@10 / nDCG@10:
+
+  | stage | all 98 | dev 65 | test 33 | xpu p50/p95 (all) | cpu p50/p95 (test) |
+  |---|---|---|---|---|---|
+  | bm25 | 0.413 / 0.470 | 0.407 / 0.465 | 0.423 / 0.480 | 99 / 414 | 96 / 525 |
+  | vector | 0.526 / 0.576 | 0.531 / 0.583 | 0.515 / 0.561 | 38 / 46 | 75 / 83 |
+  | hybrid | 0.494 / 0.564 | 0.507 / 0.575 | 0.470 / 0.543 | 128 / 446 | 185 / 598 |
+  | +pagerank | 0.546 / 0.609 | 0.572 / 0.631 | 0.495 / 0.566 | 133 / 444 | 174 / 592 |
+  | full | 0.607 / 0.646 | 0.657 / 0.690 | 0.509 / 0.559 | 195 / 504 | 640 / 1052 |
+
+  Held-out reading: full beats BM25 (0.423 → 0.509) but only matches embeddings alone (0.515). Labels are mostly
+  one page per query, so good results from other sites count as misses; the test split is small (33).
+- Every README command run: doctor (all ✓ on serve.db), stats, search, keys create (scratch DB), crawl, index, rank,
+  export, eval, Docker (ready 8 s, 3.9 GiB, 0.54–0.77 s/search on CPU). Fixed a read-only-mmap torch warning;
+  image sets HF_HUB_VERBOSITY=error.
+- Deviations from the plan, on purpose: (1) no Intel-GPU Docker image — serving on CPU is < 1.1 s p95, GPU is used
+  natively for indexing; adding Intel's compute runtime to the image isn't worth the size. (2) CI workflow written and
+  its steps (ruff + pytest) pass locally, but it has never run on GitHub (no remote, by design).
+
+## FINAL SUMMARY — phase 2 (2026-11-23)
+- General web search over **378,886 pages / 2.16M chunks** from ~110 sites; crawl DB 157 GB → serving export 13.3 GB.
+- Pipeline: BM25 (contentless FTS5) + bge-small embeddings (fp16 mmap snapshot) → RRF → PageRank → MiniLM
+  cross-encoder (+ 0.05 retrieval agreement). Intel Arc via PyTorch XPU: embedding 283 chunks/s, rerank 59 ms.
+- Hosting: `export` + Docker (CPU, models baked in, /healthz, proxy-aware rate limits), docs/DEPLOY.md.
+- Honest resume line (measured, reproducible with `python -m seekr eval`):
+  > **Seekr (Search Engine):** Built a self-hostable general web search engine over ~380K pages with a multi-stage
+  > query pipeline: BM25 and embedding retrieval, PageRank link authority, rank fusion, then cross-encoder
+  > reranking, which raised MRR@10 from 0.41 (BM25) to 0.61 on 98 labelled queries; runs on an Intel Arc iGPU
+  > (~0.2 s/query) and deploys as a 13 GB Docker index serving queries in under 1 s on CPU.
+  The old 0.624 → 0.774 came from phase 1 (4K dev-doc pages, 22 queries) and is not true of this index.

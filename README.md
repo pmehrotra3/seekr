@@ -7,14 +7,22 @@ Search through a clean web page or a REST API with API keys.
 
 **Learn how it works step by step:** [`guide.html`](guide.html) is a frozen tutorial that builds the first version (phase 1) line by line; the code here has grown since.
 
-Phase 1 numbers (4K developer-docs pages, 22 labelled queries; being re-measured on the ~360K-page general index):
+Index: **378,886 pages** (2.16M chunks) from ~110 sites: news, science, health, history, philosophy, books, music,
+sport, travel, food, how-to, law, finance, Wikipedia/Wiktionary/Wikivoyage, and tech docs.
 
-| Search quality | MRR@10 | nDCG@10 |
-|---|---|---|
-| Keyword only (BM25) | 0.624 | 0.630 |
-| Semantic only (embeddings) | 0.678 | 0.712 |
-| Hybrid (RRF) | 0.652 | 0.694 |
-| **Hybrid + relevance reranker (Seekr)** | **0.774** | **0.782** |
+Search quality on **98 hand-labelled queries** (`python -m seekr eval`; MRR@10 / nDCG@10). Weights were tuned on the
+65 `dev` queries only; the 33 `test` queries were measured once, at the end.
+
+| stage | all 98 | dev 65 | test 33 | p50 / p95, Arc GPU (all 98) | p50 / p95, CPU (test 33) |
+|---|---|---|---|---|---|
+| Keyword (BM25) | 0.413 / 0.470 | 0.407 / 0.465 | 0.423 / 0.480 | 99 / 414 ms | 96 / 525 ms |
+| Semantic (embeddings) | 0.526 / 0.576 | 0.531 / 0.583 | 0.515 / 0.561 | 38 / 46 ms | 75 / 83 ms |
+| Hybrid (RRF) | 0.494 / 0.564 | 0.507 / 0.575 | 0.470 / 0.543 | 128 / 446 ms | 185 / 598 ms |
+| + PageRank | 0.546 / 0.609 | 0.572 / 0.631 | 0.495 / 0.566 | 133 / 444 ms | 174 / 592 ms |
+| **+ cross-encoder (Seekr)** | **0.607 / 0.646** | **0.657 / 0.690** | **0.509 / 0.559** | 195 / 504 ms | 640 / 1052 ms |
+
+On held-out queries the full pipeline beats keyword search clearly but only matches embeddings alone; most labels
+are a single page, so a good result from another site counts as a miss. CPU latencies are for the test split.
 
 ## Quick start (Linux or macOS, Python 3.11+)
 

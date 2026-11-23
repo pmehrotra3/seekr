@@ -107,7 +107,8 @@ class VectorIndex:
         self.chunk_ids, matrix = load_vectors(conn)
         device = best_device()
         dtype = torch.float32 if device == "cpu" else torch.float16  # CPUs are slow at float16 math
-        self.matrix = torch.from_numpy(np.ascontiguousarray(matrix)).to(device=device, dtype=dtype)
+        # np.array: a writable copy of the memory-mapped snapshot (torch warns about read-only arrays)
+        self.matrix = torch.from_numpy(np.array(matrix)).to(device=device, dtype=dtype)
 
     def search(self, query_vector, k=100):
         """Return [(chunk_id, cosine similarity)], best first."""

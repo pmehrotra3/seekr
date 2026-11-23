@@ -6,6 +6,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/models \
     HF_HUB_OFFLINE=1 \
+    HF_HUB_VERBOSITY=error \
     SEEKR_HOST=0.0.0.0 \
     SEEKR_DB=/app/data/serve.db \
     SEEKR_TRUSTED_PROXIES=*
