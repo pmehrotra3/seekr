@@ -9,6 +9,8 @@ from sentence_transformers import SentenceTransformer
 from seekr import config
 
 # BGE models are trained to expect this prefix on short search queries (not on passages).
+torch.set_num_threads(config.CPU_THREADS)
+
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 _model = None
 

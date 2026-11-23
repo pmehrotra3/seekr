@@ -5,7 +5,7 @@ services:
   seekr:
     build: .
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"  # only the reverse proxy on this machine can reach it; use "8000:8000" to expose it
     volumes:
       - ./data:/app/data  # the index stays on your disk, outside the container
     environment:

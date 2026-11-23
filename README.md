@@ -78,22 +78,21 @@ curl -s -X POST -H "Authorization: Bearer $ADMIN_KEY" -H "Content-Type: applicat
 
 Each key may make 60 requests per minute (`429 Too Many Requests` after that). Interactive docs: http://127.0.0.1:8000/docs.
 
-## Docker
+## Hosting (Docker)
 
 ```bash
-docker compose up --build                                   # http://localhost:8000
-docker compose run --rm seekr python -m seekr crawl         # and index, rank, doctor, keys create NAME
+python -m seekr export data/serve.db     # slim copy of the index: 11.6 GB instead of 157 GB
+docker compose up -d --build             # http://127.0.0.1:8000, CPU only, models baked into the image
 ```
 
-The database and the downloaded models live in `./data` on your disk. The container runs on the CPU: same results,
-just slower. Run it natively (Quick start) to use a GPU.
+Full steps, measured sizes and server requirements (8 GB RAM, 4+ cores, 20 GB disk): [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 Measured on an Intel Core Ultra laptop (Arc 140T iGPU, `python tools/bench_device.py`):
 
 | device | embed chunks/s | rerank top-30 |
 |---|---|---|
-| CPU | 13 | 1112 ms |
-| Intel Arc (XPU, fp16) | 277 | 56 ms |
+| CPU, 12 threads | 26 | 486 ms |
+| Intel Arc (XPU, fp16) | 283 | 59 ms |
 
 ## Settings
 

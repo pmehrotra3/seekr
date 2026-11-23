@@ -458,3 +458,23 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 ## Open questions
 - ~~guide.html~~ **Resolved 2026-11-23 (user): (a) frozen** as a phase-1 tutorial with a banner; `tools/check_guide.py` and `tools/replay_guide.py` removed.
 - **Cornell LII / loc.gov** crawl slowly (crawl-delay 10 / many 403s). Final export proceeds without waiting for them.
+
+### Iteration 20 — 2026-11-23 — export, Docker on the real index, CPU fix, deploy guide (milestones 14/16)
+- `export data/serve.db`: 376,958 docs, 2,150,807 chunks/embeddings, 6m23s, peak RSS 4.9 GB → **16.9 GB**.
+  dbstat: chunks_fts_content 5.25 GB (FTS5's own copy of the text), chunks 4.79, embeddings 4.42, fts index 2.15.
+  → FTS5 made **contentless** (`content=''`; bm25/MATCH/COUNT/MAX(rowid) all work, nothing reads text from it).
+  Re-export: **11.6 GB** + 1.65 GB vector snapshot. Dev eval on serve.db: full 0.657/0.690 (crawl DB 0.667/0.697;
+  export drops non-English/empty pages).
+- Container on the real index: first try failed (I mounted data/ `:ro`; SQLite needs WAL files + api_keys table) →
+  volume must be writable (documented). Ready in 9 s, 3.6 GiB, but **~3 s per search on CPU**.
+- Profiling: query embedding 700 ms (!) and top-30 rerank 2.2 s at torch's default 16 threads. Thread sweep:
+  12 threads → rerank 467 ms, query 6 ms, embed 26 chunks/s; 16 threads → 2203 ms / 734 ms / 12 chunks/s.
+  Cause: Core Ultra mixes P/E/LP-E cores; using all 16 makes fast cores wait on slow ones.
+  **Correction:** iteration 16's "13 chunks/s is compute-bound" was wrong; it was this.
+  Fix: `SEEKR_CPU_THREADS` (default: all cores if ≤8, else ¾), applied in embed.py and bench_device.py.
+  Container after fix: ready 6 s, 3.6 GiB, **searches 0.54–0.97 s** (8 queries). bench_device: cpu 26 chunks/s, 486 ms;
+  xpu 283 chunks/s, 59 ms.
+- `docs/DEPLOY.md` (build → export → rsync → compose; measured sizes/latency; server size 8 GB RAM / 4+ cores / 20 GB;
+  reverse proxy + trusted proxies). compose now publishes on 127.0.0.1 only. README hosting section links to it.
+- guide.html frozen per user decision (a). 90 tests pass.
+- Remaining crawl (cornell/uscourts/loc.gov) still running in the background.

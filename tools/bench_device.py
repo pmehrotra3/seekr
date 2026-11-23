@@ -10,6 +10,8 @@ from sentence_transformers import CrossEncoder, SentenceTransformer
 
 from seekr import config
 
+torch.set_num_threads(config.CPU_THREADS)
+
 # ~300 words, the size of a real chunk
 TEXT = ("Search engines split pages into chunks, embed each chunk as a vector and compare it with the query. " * 20)
 
