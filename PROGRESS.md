@@ -386,3 +386,15 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
   (Einstein/Photosynthesis are not crawled; Perseverance/CDN/LLM had no clear canonical page).
 - Pending queries for the new sites (law, Fed, food, how-to, MIT OCW, NPS, NHS) once they're indexed.
 - 87 tests pass.
+
+### Iteration 16 — 2026-11-22 — hosting groundwork (milestone 16)
+- Jobs: embedding 353K/~828K at 23:19 (~160/s); NHS crawl finished (1,316 pages); others still crawling.
+- CPU speed is real, not a bug: torch(+xpu build, oneMKL) does ~300 GFLOPS fp32 matmul on 16 threads; a 512-token
+  bge-small chunk is ~35 GFLOP → ~13 chunks/s is compute-bound. Consequence: CPU-only serving pays ~1 s for the
+  top-30 rerank; to be measured (RERANK_TOP / max tokens vs. quality) in milestone 15.
+- `/healthz` (no key; answers only after vectors + models load). `serve` passes `proxy_headers=True` and
+  `SEEKR_TRUSTED_PROXIES` (default 127.0.0.1; `*` in Docker) so per-IP UI rate limits see real visitor IPs.
+- Dockerfile rewritten: CPU torch, both models baked in (`HF_HUB_OFFLINE=1` at runtime), serves `SEEKR_DB=/app/data/serve.db`
+  (an `export`), HEALTHCHECK on /healthz with a 10-min start period. `docker build` → exit 0, image 2.55 GB.
+  Note: the user's shell has `DOCKER_HOST` → Docker Desktop socket (not running); used `DOCKER_HOST=unix:///var/run/docker.sock`.
+- 88 tests pass. Next: export → container smoke test with the real index → docs/DEPLOY.md with measured size/RAM.
