@@ -20,3 +20,5 @@ def test_scopes_keep_the_seed_folder():
     assert not in_scope("https://docs.python.org/2/library/os.html", scopes)
     assert not in_scope("https://evil.com/3/", scopes)
     assert not in_scope("https://paulgraham.com/essay.pdf", scopes)
+    assert not in_scope("https://paulgraham.com/node-v23.tar.xz", scopes)
+    assert not in_scope("https://paulgraham.com/Python-3.8.9.tar.xz.asc", scopes)

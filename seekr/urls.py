@@ -5,6 +5,9 @@ TRACKING_PARAMS = {"fbclid", "gclid", "ref", "ref_src"}
 SKIP_EXTENSIONS = (
     ".pdf", ".zip", ".gz", ".tar", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
     ".ico", ".css", ".js", ".json", ".xml", ".txt", ".mp3", ".mp4", ".epub",
+    # downloads: the crawler would only learn they aren't HTML after a request and a crawl delay
+    ".xz", ".bz2", ".tgz", ".7z", ".rar", ".asc", ".sig", ".sha256", ".exe", ".msi", ".dmg", ".pkg",
+    ".deb", ".rpm", ".whl", ".iso", ".apk", ".tar.zst", ".zst", ".csv", ".woff", ".woff2", ".avi", ".mov", ".webm",
 )
 
 

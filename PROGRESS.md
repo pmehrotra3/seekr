@@ -310,3 +310,29 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
   (update or retire guide.html). CI not yet run (no remote; by design).
 - Next: finish DB counts → decide reuse vs. re-crawl for the general corpus (existing DB is dev-heavy + Wikipedia
   ≤5000/100000 per domain); README Linux/XPU quick start; then milestone 13.
+
+### Iteration 12 — 2026-11-22 — milestone 13 (corpus decision) + DB move
+- **Existing corpus counts** (read-only, `/mnt/cherry/seekr/seekr.db`): pages 436,092 (all status 200), documents
+  434,743, **usable (word_count>0, not duplicate) 361,026**, chunks 2,071,359, embeddings 1,253,899 (~60%).
+- **Corpus is already general**, not dev-only: 106 hosts, largest is en.wiktionary.org at 2.4% (cap is 15%). Mix: news
+  (BBC, Al Jazeera, The Hindu, Indian Express, Times of India, Hindustan Times), science (Nature, NASA, Sci Am, Nat Geo),
+  health (MedlinePlus, WHO), music/film/books/sport (Pitchfork, Rolling Stone, Billboard, NME, Rotten Tomatoes,
+  Goodreads, ESPN, Sky Sports), knowledge (Wikipedia, Wiktionary, Wikivoyage, Gutenberg, SEP, history.com), tech/docs.
+  Languages: en/en-us/en-gb 323K, unknown 25K, small tails (es, fr, am, …) → filter to English in milestone 14.
+- **DECISION:** reuse this corpus (it meets ~300K and the 15% cap) instead of a Common Crawl bootstrap; fill category
+  gaps (law, finance, food, how-to, education, health, travel) with a small curated crawl.
+- 27 candidates checked (robots.txt + homepage with `SeekrBot/0.1`); 14 usable, added to `seeds.txt` (98 seeds now):
+  law.cornell.edu/wex (crawl-delay 10), uscourts.gov, oyez.org (5), consumerfinance.gov, federalreserve.gov, bbcgoodfood,
+  instructables, familyhandyman, ifixit, ocw.mit.edu, loc.gov (5), nps.gov, nhs.uk/conditions, lonelyplanet.
+  Refused (402/403 or robots): investopedia, seriouseats, allrecipes, simplyrecipes, bls.gov, wikihow, britannica,
+  smithsonianmag, worldhistory, mayoclinic, cdc.gov, nih.gov, cia.gov factbook.
+- Code: `crawl --seeds FILE` (crawl only those sites; test added); `SKIP_EXTENSIONS` += download types (.xz, .asc, .exe,
+  .deb, .whl, .iso, …) because `live.log` showed the crawler spending requests + crawl delays on nodejs/python release
+  archives (tests added). ruff clean, 79 passed.
+- **Problem found:** a crawl against the USB-HDD DB spent >6 min in setup at ~6 MB/s random reads (`requeue_errors` does
+  a full frontier scan: the index is (host,status,depth)) and never fetched a page. Killed it.
+- **DECISION:** copy the DB to NVMe (`data/seekr.db`, 1.2 TB free) and work there; the USB copy stays untouched as a
+  backup. Copy running at ~43 MB/s (~65 min for 170 GB), log `data/logs/copy-db.log`.
+- Next: when the copy finishes (check `exit 0` in copy-db.log and sizes match), run
+  `SEEKR_MAX_PAGES_PER_DOMAIN=4000 python -m seekr crawl --seeds data/seeds-new-2026-11-22.txt` in the background
+  (SEEKR_DB default now points at it), then finish embeddings (~820K chunks ≈ 50 min on XPU).

@@ -37,3 +37,19 @@ def test_contact_goes_into_the_user_agent(monkeypatch):
         monkeypatch.delenv("SEEKR_CONTACT")
         importlib.reload(config)
     assert config.USER_AGENT == "SeekrBot/0.1"
+
+
+def test_crawl_seeds_option_crawls_only_that_file(tmp_path, monkeypatch):
+    from seekr import crawler
+
+    seeds = tmp_path / "new.txt"
+    seeds.write_text("https://new.example/\n")
+    seen = []
+
+    async def fake_crawl(seed_urls, conn, **kwargs):
+        seen.extend(seed_urls)
+
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "t.db")
+    monkeypatch.setattr(crawler, "crawl", fake_crawl)
+    main(["crawl", "--seeds", str(seeds)])
+    assert seen == ["https://new.example/"]

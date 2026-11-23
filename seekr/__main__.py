@@ -19,8 +19,10 @@ def print_host_stats(conn):
 
 
 def cmd_crawl(args):
+    """Crawl seeds.txt plus discovered sites, or only the sites in --seeds FILE."""
     conn = db.connect()
-    asyncio.run(crawler.crawl(config.read_seeds() + discover.found_seeds(conn), conn))
+    seeds = config.read_seeds(args.seeds) if args.seeds else config.read_seeds() + discover.found_seeds(conn)
+    asyncio.run(crawler.crawl(seeds, conn))
     print_host_stats(conn)
 
 
@@ -148,6 +150,8 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
     for name in COMMANDS:
         command = sub.add_parser(name)
+        if name == "crawl":
+            command.add_argument("--seeds", help="crawl only the sites in this file (default: seeds.txt + discovered)")
         if name == "search":
             command.add_argument("query", nargs="+")
         if name == "keys":

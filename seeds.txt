@@ -1,3 +1,4 @@
+# Seekr seeds: a general web search engine. One URL per line; the crawler stays inside each seed's folder.
 https://docs.python.org/3/
 https://developer.mozilla.org/en-US/docs/Web
 https://fastapi.tiangolo.com/
@@ -83,6 +84,23 @@ https://www.timeanddate.com/
 https://www.gutenberg.org/
 https://plato.stanford.edu/
 https://www.khanacademy.org/
+# General web: law, government, money (robots.txt checked 2026-11-22)
+https://www.law.cornell.edu/wex
+https://www.uscourts.gov/about-federal-courts
+https://www.oyez.org/
+https://www.consumerfinance.gov/consumer-tools/
+https://www.federalreserve.gov/
+# General web: food, how-to, repair
+https://www.bbcgoodfood.com/
+https://www.instructables.com/
+https://www.familyhandyman.com/
+https://www.ifixit.com/Guide
+# General web: education, history, health, travel
+https://ocw.mit.edu/
+https://www.loc.gov/
+https://www.nps.gov/
+https://www.nhs.uk/conditions/
+https://www.lonelyplanet.com/
 # Wikimedia (needs SEEKR_CONTACT: their policy requires contact info in the User-Agent)
 https://en.wikipedia.org/wiki/Main_Page
 https://en.wikipedia.org/wiki/Adele
