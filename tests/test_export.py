@@ -32,6 +32,8 @@ def test_export_keeps_only_searchable_english_pages(tmp_path):
     assert counts == {"documents": 2, "chunks": 2, "embeddings": 2, "pagerank": 2, "sites": 1}
     out = db.connect(tmp_path / "serve.db")
     assert out.execute("SELECT COUNT(*) FROM pages").fetchone()[0] == 0  # no raw HTML
+    tables = {row[0] for row in out.execute("SELECT name FROM sqlite_master")}
+    assert "chunks_fts_content" not in tables  # contentless keyword index: no second copy of the text
     assert [hit[0] for hit in index.keyword_search(out, "ownership")] in ([1, 5], [5, 1])
     assert list(embed.load_vectors(out)[0]) == [1, 5]
     assert (tmp_path / "serve.db.vectors.npy").exists()
