@@ -14,8 +14,7 @@ from seekr import config, discover, embed, index
 
 CHUNK_SQL = """SELECT c.doc_id, c.text, d.url, d.title, d.published, d.language, d.word_count
                FROM chunks c JOIN documents d ON d.id = c.doc_id WHERE c.id = ?"""
-STOPWORDS = {"the", "and", "for", "how", "can", "what", "with", "does", "are", "you", "your", "from", "that", "this",
-             "when", "why", "which", "into", "about", "same"}
+STOPWORDS = index.STOPWORDS
 _reranker = None
 
 
@@ -119,6 +118,7 @@ class SearchEngine:
         pairs = [(query, f"{page['title']}\n{page['text']}") for page in pages]
         logits = get_reranker().predict(pairs, batch_size=16, activation_fn=torch.nn.Identity())
         words = query_words(query)
+        best_rrf = max(page["rrf"] for page in pages)
         for page, logit in zip(pages, logits, strict=False):
             title_and_url = f"{page['title']} {page['url']}".lower()
             page["relevance"] = float(sigmoid(logit))
@@ -130,6 +130,7 @@ class SearchEngine:
                 config.W_RELEVANCE * page["relevance"] + config.W_PAGERANK * page["pagerank"]
                 + config.W_FRESHNESS * page["freshness"] + config.W_EXACT * page["exact"]
                 + config.W_SITE * page["site_authority"]
+                + config.W_RETRIEVAL * page["rrf"] / best_rrf  # how strongly BM25 + vectors agreed (0..1)
             )
             if page["word_count"] < config.THIN_PAGE_WORDS:
                 page["final_score"] *= config.THIN_PAGE_PENALTY

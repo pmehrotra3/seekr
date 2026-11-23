@@ -15,6 +15,8 @@ def make_conn(tmp_path, pages):
 def test_query_is_escaped():
     assert index.to_fts_query('SQLite "FTS5"; DROP TABLE x--') == '"sqlite" OR "fts5" OR "drop" OR "table" OR "x"'
     assert index.to_fts_query("?!") == ""
+    assert index.to_fts_query("how do I make a CDN") == '"cdn"'  # stopwords dropped
+    assert index.to_fts_query("to be or") == '"to" OR "be" OR "or"'  # unless nothing else is left
 
 
 def test_title_matches_rank_higher(tmp_path):

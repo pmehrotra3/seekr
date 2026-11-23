@@ -398,3 +398,33 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
   (an `export`), HEALTHCHECK on /healthz with a 10-min start period. `docker build` → exit 0, image 2.55 GB.
   Note: the user's shell has `DOCKER_HOST` → Docker Desktop socket (not running); used `DOCKER_HOST=unix:///var/run/docker.sock`.
 - 88 tests pass. Next: export → container smoke test with the real index → docs/DEPLOY.md with measured size/RAM.
+
+### Iteration 17 — 2026-11-23 — full-index measurements (milestones 14/15)
+- `index` finished: **824,485 chunks embedded on xpu in ~85 min** (~160/s incl. SQLite I/O). All 2,071,359+ chunks have vectors.
+- `rank`: PageRank over **365,220 pages, 38,148,445 links in 3m51s, peak RSS 10.7 GB**. Top pages are boilerplate
+  link targets (nodejs download index, accessibility pages) — known PageRank weakness; its weight is small.
+- Vector snapshot built on first load: `seekr.db.vectors.npy` 1.60 GB (fp16) + ids 16.6 MB.
+- First full eval (58 queries, xpu): bm25 0.422/0.477, vector 0.613/0.617, hybrid 0.567/0.614, +pagerank 0.601/0.647,
+  full 0.584/0.622 (MRR@10/nDCG@10); bm25 p95 2.2 s.
+- Diagnosis on **dev only**: (1) question-style queries make FTS5 OR in "how/do/I/a" → 1–2 s; (2) cross-encoder scores
+  saturate near 1.0 (0.997/0.991/0.988) on a big index, so near-ties reorder good results (diabetes 1→5).
+- Fixes: stopwords dropped from the FTS query (kept if nothing else is left; list moved to `index.STOPWORDS`);
+  `W_RETRIEVAL` blends normalized RRF agreement into the final score. Grid on dev: 0→0.647/0.665, 0.05→0.711/0.711,
+  0.1→0.714/0.706, 0.2→0.636, 1.0→0.588 → **0.05** (smaller of the two best).
+- Eval after fixes (`data/logs/eval-full-xpu-2.log`), MRR@10 / nDCG@10, p50/p95 ms:
+
+  | stage | all (58) | dev (34) | test (24) | p50/p95 all |
+  |---|---|---|---|---|
+  | bm25 | 0.444 / 0.487 | 0.470 / 0.500 | 0.406 / 0.469 | 105 / 509 |
+  | vector | 0.613 / 0.617 | 0.603 / 0.603 | 0.626 / 0.636 | 32 / 35 |
+  | hybrid | 0.563 / 0.607 | 0.577 / 0.619 | 0.543 / 0.589 | 138 / 531 |
+  | +pagerank | 0.592 / 0.637 | 0.619 / 0.659 | 0.553 / 0.606 | 139 / 543 |
+  | full | 0.629 / 0.656 | 0.711 / 0.711 | 0.514 / 0.578 | 203 / 609 |
+
+- **Honest status vs. TARGET:** on all 58 queries BM25 → full is 0.444 → 0.629 MRR@10, not 0.624 → 0.774. On the
+  held-out test split the reranker *hurts* (vector-only is best). Likely cause: dev is 22 tech + 12 general, test
+  is all general, so dev tuning favours tech. Not inspecting test queries individually (that would leak).
+- Next: add ≥20 general **dev** queries (incl. the new law/finance/food/how-to/education/parks sites once indexed)
+  so tuning sees general queries; then try, on dev only: reranker logits instead of sigmoid, rerank text =
+  title + best 2 chunks, a general-domain reranker (e.g. BAAI/bge-reranker-base was 3x slower in phase 1),
+  hybrid with fewer BM25 candidates. Re-measure test once at the end.

@@ -41,6 +41,8 @@ RERANK_MAX_TOKENS = int(os.environ.get("SEEKR_RERANK_MAX_TOKENS", "384"))
 # Tuned on evals/queries.jsonl. Freshness is 0: docs show "last updated today", so dates mislead.
 W_RELEVANCE, W_PAGERANK, W_FRESHNESS, W_EXACT = 0.90, 0.05, 0.0, 0.05
 W_SITE = float(os.environ.get("SEEKR_W_SITE", "0.05"))  # how many other sites link to the result's site
+# The cross-encoder's scores bunch up near 1.0 on a big index; the first-stage agreement breaks those ties.
+W_RETRIEVAL = float(os.environ.get("SEEKR_W_RETRIEVAL", "0.05"))  # tuned on the dev split only
 W_RRF_PAGERANK = float(os.environ.get("SEEKR_W_RRF_PAGERANK", "0.005"))  # RRF scores are ~0.01-0.03
 THIN_PAGE_WORDS, THIN_PAGE_PENALTY = 50, 0.8
 REFRESH_SECONDS = float(os.environ.get("SEEKR_REFRESH_SECONDS", "300"))  # how often search picks up new pages

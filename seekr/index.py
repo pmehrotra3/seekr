@@ -7,6 +7,10 @@ CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
     tokenize = 'porter unicode61'  -- lowercase, strip accents, and stem: "indexes" matches "index"
 );
 """
+# Words in almost every chunk: matching them costs seconds on a big index and says nothing about relevance
+STOPWORDS = {"the", "and", "for", "how", "can", "what", "with", "does", "are", "you", "your", "from", "that", "this",
+             "when", "why", "which", "into", "about", "same", "a", "an", "i", "to", "of", "in", "on", "is", "it",
+             "do", "my", "me", "we", "so", "or", "be", "at", "by", "as", "if", "up", "should", "make", "get", "there"}
 TITLE_WEIGHT, TEXT_WEIGHT = 5.0, 1.0  # a word in the title counts 5x more than in the body
 
 
@@ -25,8 +29,10 @@ def build_index(conn):
 
 
 def to_fts_query(query):
-    """Turn free text into a safe FTS5 query: every word quoted, joined with OR."""
-    words = re.findall(r"\w+", query.lower())
+    """Turn free text into a safe FTS5 query: every word quoted, joined with OR. Stopwords are dropped,
+    unless the query has nothing else ("the who")."""
+    words = list(dict.fromkeys(re.findall(r"\w+", query.lower())))
+    words = [word for word in words if word not in STOPWORDS] or words
     return " OR ".join(f'"{word}"' for word in words)
 
 
