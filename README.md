@@ -5,7 +5,7 @@ A polite crawler, SQLite storage, keyword (BM25) plus semantic (embedding) retri
 Reciprocal Rank Fusion, and a cross-encoder that reads each result together with your query to score its relevance.
 Search through a clean web page or a REST API with API keys.
 
-**Build it yourself, line by line:** open [`guide.html`](guide.html) in a browser.
+**Learn how it works step by step:** [`guide.html`](guide.html) is a frozen tutorial that builds the first version (phase 1) line by line; the code here has grown since.
 
 Phase 1 numbers (4K developer-docs pages, 22 labelled queries; being re-measured on the ~360K-page general index):
 

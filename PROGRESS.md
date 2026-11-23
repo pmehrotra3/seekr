@@ -454,3 +454,7 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 - Reranker comparison, **dev only** (65 queries; MRR@10 / nDCG@10 / p50): vector 0.535/0.586/43 ms,
   +pagerank 0.573/0.631/141 ms; MiniLM-L6 (ms-marco) W=0.05 **0.667/0.697/200 ms**; BAAI/bge-reranker-base W=0.05
   0.597/0.636/363 ms. → keep MiniLM (better and ~2x faster). Log: `data/logs/reranker-compare-dev.log`.
+
+## Open questions
+- ~~guide.html~~ **Resolved 2026-11-23 (user): (a) frozen** as a phase-1 tutorial with a banner; `tools/check_guide.py` and `tools/replay_guide.py` removed.
+- **Cornell LII / loc.gov** crawl slowly (crawl-delay 10 / many 403s). Final export proceeds without waiting for them.
