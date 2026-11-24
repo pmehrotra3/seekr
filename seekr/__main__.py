@@ -3,11 +3,10 @@ import argparse
 import asyncio
 import logging
 import sqlite3
-import sys
 import threading
 import time
 
-from seekr import api, config, crawler, db, discover, doctor, embed, evaluate, export, extract, index, rank, search, web
+from seekr import api, config, crawler, db, discover, embed, evaluate, export, extract, index, rank, search, web
 
 log = logging.getLogger("seekr.live")
 
@@ -116,10 +115,6 @@ def cmd_keys(args):
     print(f"New {'admin ' if args.admin else ''}API key for {args.name!r} (shown once, store it safely):\n{key}")
 
 
-def cmd_doctor(args):
-    sys.exit(0 if doctor.run_checks() else 1)
-
-
 def cmd_stats(args):
     seeds = config.read_seeds()
     db_state = "exists" if config.DB_PATH.exists() else "not created yet"
@@ -148,7 +143,6 @@ COMMANDS = {
     "search": cmd_search,
     "eval": cmd_eval,
     "keys": cmd_keys,
-    "doctor": cmd_doctor,
     "export": cmd_export,
 }
 

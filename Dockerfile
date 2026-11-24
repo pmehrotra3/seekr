@@ -6,7 +6,6 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/models \
     HF_HUB_OFFLINE=1 \
-    HF_HUB_VERBOSITY=error \
     SEEKR_HOST=0.0.0.0 \
     SEEKR_DB=/app/data/serve.db \
     SEEKR_TRUSTED_PROXIES=*
@@ -24,7 +23,6 @@ from seekr import config; SentenceTransformer(config.EMBED_MODEL); CrossEncoder(
 COPY seeds.txt ./
 COPY seekr ./seekr
 COPY web ./web
-COPY evals ./evals
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10m --retries=3 \

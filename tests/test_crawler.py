@@ -116,3 +116,11 @@ def test_unreachable_robots_skips_the_host_for_now(conn):
         return httpx.Response(503)
 
     assert run_crawl(conn, down)["https://example.com/"] == "queued"
+
+
+def test_hosts_with_unreachable_robots_are_logged_and_skipped(tmp_path, caplog):
+    conn = db.connect(tmp_path / "t.db")
+    down = httpx.MockTransport(lambda request: httpx.Response(503))
+    with caplog.at_level("WARNING", logger="seekr.crawler"):
+        asyncio.run(crawler.crawl(["https://example.com/"], conn, transport=down))
+    assert "example.com: robots.txt unreachable" in caplog.text

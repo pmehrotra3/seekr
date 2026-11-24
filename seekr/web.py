@@ -6,7 +6,7 @@ from seekr import api, config
 
 
 def create_site(db_path=None):
-    """The API app from Chapter 8, plus the website. A browser can't keep a secret key, so the page calls
+    """The API app plus the website. A browser can't keep a secret key, so the page calls
     /ui/search, which needs no key but is rate-limited per visitor (IP address) instead."""
     app = api.create_app(db_path)
     app.state.ui_limiter = api.RateLimiter(config.UI_RATE_LIMIT_PER_MINUTE)

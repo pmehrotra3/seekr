@@ -5,8 +5,10 @@ description = "A small, self-hostable general web search engine: BM25 + embeddin
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-# Exact pins live in requirements.txt. PyTorch is installed separately for your hardware (see README).
-dependencies = ["httpx", "trafilatura", "torch", "sentence-transformers", "numpy", "fastapi", "uvicorn"]
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.4", "ruff==0.14.0"]
 
 [project.scripts]
 seekr = "seekr.__main__:main"
@@ -17,6 +19,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["seekr"]
+dynamic.dependencies = { file = ["requirements.txt"] }
 
 [tool.ruff]
 line-length = 120
