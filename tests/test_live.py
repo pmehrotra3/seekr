@@ -2,7 +2,9 @@ import sqlite3
 import time
 
 from seekr import __main__ as cli
-from seekr import config, db, embed, extract, rank, search
+from seekr import config, db
+from seekr.index import embed, extract, pagerank
+from seekr.search import ranker
 
 
 def add_page(conn, doc_id, text):
@@ -21,10 +23,10 @@ def test_database_can_be_read_while_another_program_writes(tmp_path):
 
 def test_search_engine_picks_up_new_embeddings(tmp_path):
     conn = db.connect(tmp_path / "t.db")
-    conn.execute(rank.SCHEMA)
+    conn.execute(pagerank.SCHEMA)
     add_page(conn, 1, "Rust ownership rules")
     embed.embed_chunks(conn)
-    engine = search.SearchEngine(conn)
+    engine = ranker.SearchEngine(conn)
     assert list(engine.vectors.chunk_ids) == [1]
     add_page(conn, 2, "Python asyncio event loop")
     embed.embed_chunks(conn)
@@ -54,10 +56,10 @@ def test_one_broken_page_does_not_stop_indexing(monkeypatch):
 
 def test_search_reloads_at_most_every_refresh_seconds(tmp_path, monkeypatch):
     conn = db.connect(tmp_path / "t.db")
-    conn.execute(rank.SCHEMA)
+    conn.execute(pagerank.SCHEMA)
     add_page(conn, 1, "Rust ownership rules")
     embed.embed_chunks(conn)
-    engine = search.SearchEngine(conn)
+    engine = ranker.SearchEngine(conn)
     add_page(conn, 2, "Python asyncio event loop")
     embed.embed_chunks(conn)
     engine.search("python", mode="vector")

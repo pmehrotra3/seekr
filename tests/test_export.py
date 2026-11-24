@@ -1,12 +1,13 @@
 import numpy as np
 import pytest
 
-from seekr import db, embed, export, index, rank
+from seekr import db
+from seekr.index import bm25, embed, export, pagerank
 
 
 def make_crawl_db(path):
     conn = db.connect(path)
-    conn.execute(rank.SCHEMA)
+    conn.execute(pagerank.SCHEMA)
     docs = [  # id, url, language, word_count, duplicate_of
         (1, "https://a.com/en", "en", 100, None),
         (2, "https://a.com/fr", "fr", 100, None),
@@ -34,7 +35,7 @@ def test_export_keeps_only_searchable_english_pages(tmp_path):
     assert out.execute("SELECT COUNT(*) FROM pages").fetchone()[0] == 0  # no raw HTML
     tables = {row[0] for row in out.execute("SELECT name FROM sqlite_master")}
     assert "chunks_fts_content" not in tables  # contentless keyword index: no second copy of the text
-    assert [hit[0] for hit in index.keyword_search(out, "ownership")] in ([1, 5], [5, 1])
+    assert [hit[0] for hit in bm25.keyword_search(out, "ownership")] in ([1, 5], [5, 1])
     assert list(embed.load_vectors(out)[0]) == [1, 5]
     assert (tmp_path / "serve.db.vectors.npy").exists()
 

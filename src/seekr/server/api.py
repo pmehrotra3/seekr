@@ -12,8 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from seekr import config, db, embed, search
-from seekr.urls import normalize_url
+from seekr import config, db
+from seekr.crawl.urls import normalize_url
+from seekr.index import embed
+from seekr.search import ranker
 
 log = logging.getLogger(__name__)
 KEYS_SCHEMA = """CREATE TABLE IF NOT EXISTS api_keys (
@@ -168,7 +170,7 @@ async def add_seeds(body: Seeds, key=Depends(admin_key)):
     added = [url for url in dict.fromkeys(urls) if url not in known]
     with open(config.SEEDS_FILE, "a") as seeds_file:
         seeds_file.writelines(f"{url}\n" for url in added)
-    return {"added": added, "next": "python -m seekr crawl && python -m seekr index && python -m seekr rank"}
+    return {"added": added, "next": "seekr crawl && seekr index && seekr rank"}
 
 
 def create_app(db_path=None):
@@ -176,7 +178,7 @@ def create_app(db_path=None):
     async def lifespan(app):
         app.state.conn = db.connect(db_path)
         app.state.conn.executescript(KEYS_SCHEMA)
-        app.state.engine = search.SearchEngine(app.state.conn)  # loads vectors + models once, at startup
+        app.state.engine = ranker.SearchEngine(app.state.conn)  # loads vectors + models once, at startup
         app.state.engine.search("warm up")  # the GPU compiles its kernels on first use; do it before users arrive
         app.state.limiter = RateLimiter(config.RATE_LIMIT_PER_MINUTE)
         yield

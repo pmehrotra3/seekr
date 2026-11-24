@@ -2,7 +2,8 @@
 from fastapi import HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
 
-from seekr import api, config
+from seekr import config
+from seekr.server import api
 
 
 def create_site(db_path=None):
@@ -19,5 +20,6 @@ def create_site(db_path=None):
             raise HTTPException(429, "Too many searches. Wait a minute and try again.", headers={"Retry-After": "60"})
         return await api.search_pages(request, q=q, limit=10, offset=offset, site=None, key=None)
 
-    app.mount("/", StaticFiles(directory=config.ROOT / "web", html=True), name="web")  # last: API routes win
+    static = StaticFiles(directory=config.PACKAGE / "server" / "static", html=True)
+    app.mount("/", static, name="web")  # last: API routes win
     return app

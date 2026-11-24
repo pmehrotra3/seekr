@@ -3,7 +3,8 @@ import asyncio
 import httpx
 import pytest
 
-from seekr import config, crawler, db
+from seekr import config, db
+from seekr.crawl import crawler
 
 # A tiny fake website. Each path maps to (status, content type, body).
 SITE = {
@@ -121,6 +122,6 @@ def test_unreachable_robots_skips_the_host_for_now(conn):
 def test_hosts_with_unreachable_robots_are_logged_and_skipped(tmp_path, caplog):
     conn = db.connect(tmp_path / "t.db")
     down = httpx.MockTransport(lambda request: httpx.Response(503))
-    with caplog.at_level("WARNING", logger="seekr.crawler"):
+    with caplog.at_level("WARNING", logger="seekr.crawl.crawler"):
         asyncio.run(crawler.crawl(["https://example.com/"], conn, transport=down))
     assert "example.com: robots.txt unreachable" in caplog.text

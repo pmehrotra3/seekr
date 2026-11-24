@@ -2,7 +2,8 @@ import os
 
 import numpy as np
 
-from seekr import db, embed
+from seekr import db
+from seekr.index import embed
 
 
 def test_similar_meanings_get_close_vectors():

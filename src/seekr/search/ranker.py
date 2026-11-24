@@ -10,11 +10,13 @@ import numpy as np
 import torch
 from sentence_transformers import CrossEncoder
 
-from seekr import config, discover, embed, index
+from seekr import config
+from seekr.crawl import discover
+from seekr.index import bm25, embed
 
 CHUNK_SQL = """SELECT c.doc_id, c.text, d.url, d.title, d.published, d.language, d.word_count
                FROM chunks c JOIN documents d ON d.id = c.doc_id WHERE c.id = ?"""
-STOPWORDS = index.STOPWORDS
+STOPWORDS = bm25.STOPWORDS
 _reranker = None
 
 
@@ -95,7 +97,7 @@ class SearchEngine:
         """Best chunk per page from BM25 and/or vectors, fused with RRF. English pages only."""
         rankings = {}
         if mode in ("bm25", "hybrid", "pagerank", "full"):
-            rankings["bm25"] = index.keyword_search(self.conn, query, config.CANDIDATES)
+            rankings["bm25"] = bm25.keyword_search(self.conn, query, config.CANDIDATES)
         if mode in ("vector", "hybrid", "pagerank", "full"):
             rankings["vector"] = self.vectors.search(embed.embed_query(query), config.CANDIDATES)
         fused, ranks = rrf(rankings)

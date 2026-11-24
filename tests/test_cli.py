@@ -40,7 +40,7 @@ def test_contact_goes_into_the_user_agent(monkeypatch):
 
 
 def test_crawl_seeds_option_crawls_only_that_file(tmp_path, monkeypatch):
-    from seekr import crawler
+    from seekr.crawl import crawler
 
     seeds = tmp_path / "new.txt"
     seeds.write_text("https://new.example/\n")

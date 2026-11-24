@@ -5,9 +5,23 @@
 A small, self-hostable web search engine: polite crawler, hybrid retrieval, link authority and neural reranking,
 served through a web page and a REST API. It runs on one machine, with or without a GPU.
 
+## How it works
+
+1. **Crawl** pages from a list of sites, obeying `robots.txt`.
+2. **Index** their text: keyword index (BM25), embeddings, and PageRank over the links.
+3. **Search**: take the best keyword and embedding matches, fuse them, and let a cross-encoder rerank the top 30.
+4. **Serve** results through a website and a REST API.
+
 ```
-seeds.txt → crawler → SQLite → text chunks → BM25 index + embeddings + PageRank
-query     → BM25 top 100 + vector top 100 → Reciprocal Rank Fusion → cross-encoder → results
+src/seekr/
+├── crawl/        1. crawler, site discovery, URL rules, seeds.txt
+├── index/        2. text extraction, BM25, embeddings, PageRank, export
+├── search/       3. ranking pipeline, evaluation, labelled queries
+├── server/       4. REST API and website
+├── __main__.py   the `seekr` command
+├── config.py     settings
+└── db.py         SQLite storage
+tests/
 ```
 
 ## Quick start
@@ -19,21 +33,21 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu         # CPU
 # pip install torch==2.15.0+xpu --index-url https://download.pytorch.org/whl/xpu   # Intel Arc
 # pip install torch==2.15.0                                                        # NVIDIA or Apple
-pip install -r requirements.txt
+pip install -e .
 
-python -m seekr crawl     # download pages from seeds.txt (obeys robots.txt, resumable)
-python -m seekr index     # extract text, build the keyword index, embed
-python -m seekr rank      # PageRank
-python -m seekr serve     # http://127.0.0.1:8000, API docs at /docs
+seekr crawl     # download pages (obeys robots.txt, resumable)
+seekr index     # extract text, build the keyword index, embed
+seekr rank      # PageRank
+seekr serve     # http://127.0.0.1:8000, API docs at /docs
 ```
 
 Other commands: `search`, `eval`, `stats`, `keys`, `export`, `discover` and `live` (crawl and index continuously).
-Settings are in [seekr/config.py](seekr/config.py); override any with an environment variable, such as `SEEKR_DEVICE=cpu`.
+Settings are in [config.py](src/seekr/config.py); override any with an environment variable, such as `SEEKR_DEVICE=cpu`.
 
 ## API
 
 ```bash
-python -m seekr keys create my-app     # prints a key once; only its hash is stored
+seekr keys create my-app     # prints a key once; only its hash is stored
 curl -H "Authorization: Bearer $KEY" "http://127.0.0.1:8000/api/v1/search?q=rust+ownership&limit=3"
 ```
 
@@ -42,9 +56,9 @@ Also `/api/v1/page` and `/api/v1/stats`. Each key may make 60 requests per minut
 ## Hosting
 
 ```bash
-python -m seekr export data/serve.db   # only what search needs
+seekr export data/serve.db             # only what search needs
 docker compose up -d --build           # http://127.0.0.1:8000
-docker compose exec seekr python -m seekr keys create my-app
+docker compose exec seekr seekr keys create my-app
 ```
 
 To move to a server, copy `data/serve.db*` into its `data/` folder and put an HTTPS reverse proxy in front. The container
@@ -54,7 +68,7 @@ On a 16-core Intel laptop, CPU only, the 379K-page index takes 13 GB of disk and
 
 ## Results
 
-378,886 pages, 2.16M chunks, 98 hand-labelled queries. Values are MRR@10 / nDCG@10 from `python -m seekr eval`.
+378,886 pages, 2.16M chunks, 98 hand-labelled queries. Values are MRR@10 / nDCG@10 from `seekr eval`.
 The index itself is not in this repository.
 
 | Stage | dev (65) | test (33) | median, Intel Arc | median, CPU |

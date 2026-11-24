@@ -1,11 +1,12 @@
-"""`python -m seekr export OUT.db`: a slim copy of the database with only what searching needs.
+"""`seekr export OUT.db`: a slim copy of the database with only what searching needs.
 
 The crawl database keeps the raw HTML of every page (most of its size) and the crawl queue. A server needs
 neither: it needs the searchable English pages, their chunks, keyword index, vectors, PageRank and site scores.
 """
 from pathlib import Path
 
-from seekr import db, embed, index, rank
+from seekr import db
+from seekr.index import bm25, embed, pagerank
 
 KEEP = "d.word_count > 0 AND d.duplicate_of IS NULL AND (IFNULL(d.language, '') = '' OR d.language LIKE 'en%')"
 
@@ -17,7 +18,7 @@ def export(conn, out_path):
         raise FileExistsError(f"{out_path} already exists")
     source = conn.execute("PRAGMA database_list").fetchone()[2]
     out = db.connect(out_path)
-    out.execute(rank.SCHEMA)
+    out.execute(pagerank.SCHEMA)
     out.execute("ATTACH DATABASE ? AS src", (source,))
     out.execute(f"INSERT INTO documents SELECT d.* FROM src.documents d WHERE {KEEP}")
     out.execute("INSERT INTO chunks SELECT c.* FROM src.chunks c WHERE c.doc_id IN (SELECT id FROM documents)")
@@ -26,7 +27,7 @@ def export(conn, out_path):
     out.execute("INSERT INTO sites SELECT * FROM src.sites")
     out.commit()
     out.execute("DETACH DATABASE src")
-    index.build_index(out)
+    bm25.build_index(out)
     embed.load_vectors(out)  # writes the vector snapshot next to the new database
     counts = {table: out.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
               for table in ("documents", "chunks", "embeddings", "pagerank", "sites")}

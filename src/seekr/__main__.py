@@ -1,4 +1,4 @@
-"""Command-line entry point: python -m seekr <command>."""
+"""Command-line entry point: seekr <command>."""
 import argparse
 import asyncio
 import logging
@@ -6,7 +6,11 @@ import sqlite3
 import threading
 import time
 
-from seekr import api, config, crawler, db, discover, embed, evaluate, export, extract, index, rank, search, web
+from seekr import config, db
+from seekr.crawl import crawler, discover
+from seekr.index import bm25, embed, export, extract, pagerank
+from seekr.search import evaluate, ranker
+from seekr.server import api, web
 
 log = logging.getLogger("seekr.live")
 
@@ -30,14 +34,14 @@ def cmd_index(args):
     print("Extracting text from crawled pages:")
     counts = extract.index_pages(conn)
     print(f"new: {counts['new']}  duplicates: {counts['duplicate']}  no main text: {counts['empty']}")
-    print(f"Keyword index: added {index.build_index(conn)} chunks")
+    print(f"Keyword index: added {bm25.build_index(conn)} chunks")
     print(f"Embedding chunks on {embed.best_device()}:")
     print(f"embedded: {embed.embed_chunks(conn)}")
 
 
 def cmd_rank(args):
     conn = db.connect()
-    pages, links = rank.compute_pagerank(conn)
+    pages, links = pagerank.compute_pagerank(conn)
     print(f"PageRank over {pages} pages and {links} links. Top 10:")
     top = conn.execute(
         "SELECT r.score, d.url FROM pagerank r JOIN documents d ON d.id = r.doc_id ORDER BY r.score DESC LIMIT 10"
@@ -84,13 +88,13 @@ def cmd_live(args):
 
 
 def cmd_search(args):
-    engine = search.SearchEngine(db.connect())
+    engine = ranker.SearchEngine(db.connect())
     for i, result in enumerate(engine.search(" ".join(args.query)), start=1):
         print(f"{i:2}. [{result['relevance']:.2f}] {result['title']}\n    {result['url']}")
 
 
 def cmd_eval(args):
-    engine = search.SearchEngine(db.connect())
+    engine = ranker.SearchEngine(db.connect())
     queries = evaluate.load_queries()
     if args.split:
         queries = [item for item in queries if item.get("split") == args.split]

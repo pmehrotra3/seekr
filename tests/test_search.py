@@ -1,30 +1,32 @@
 import numpy as np
 import pytest
 
-from seekr import db, embed, index, rank, search
+from seekr import db
+from seekr.index import bm25, embed, pagerank
+from seekr.search import ranker
 
 
 def test_rrf_rewards_agreement():
-    fused, ranks = search.rrf({"bm25": [("a", 9), ("b", 5)], "vector": [("b", 0.9), ("c", 0.8)]})
+    fused, ranks = ranker.rrf({"bm25": [("a", 9), ("b", 5)], "vector": [("b", 0.9), ("c", 0.8)]})
     assert max(fused, key=fused.get) == "b"  # 2nd + 1st beats a single 1st place
     assert ranks["b"] == {"bm25": 2, "vector": 1}
     assert np.isclose(fused["a"], 1 / 61)
 
 
 def test_highlight_marks_words_and_escapes_html():
-    snippet = search.highlight("Use <b>asyncio</b> to run Tasks concurrently.", "asyncio tasks")
+    snippet = ranker.highlight("Use <b>asyncio</b> to run Tasks concurrently.", "asyncio tasks")
     assert "&lt;b&gt;<mark>asyncio</mark>&lt;/b&gt;" in snippet
     assert "<mark>Tasks</mark>" in snippet
 
 
 def test_freshness_fades_with_age():
-    assert search.freshness("") == 0.5
-    assert search.freshness("2000-01-01") < search.freshness("2020-01-01") < 1
+    assert ranker.freshness("") == 0.5
+    assert ranker.freshness("2000-01-01") < ranker.freshness("2020-01-01") < 1
 
 
 def test_sigmoid_maps_logits_to_probabilities():
-    assert np.isclose(search.sigmoid(0), 0.5)
-    assert search.sigmoid(-10) < 0.001 < 0.999 < search.sigmoid(10)
+    assert np.isclose(ranker.sigmoid(0), 0.5)
+    assert ranker.sigmoid(-10) < 0.001 < 0.999 < ranker.sigmoid(10)
 
 
 PAGES = {
@@ -46,10 +48,10 @@ def engine(tmp_path_factory):
                      (doc_id, url, title, language, len(text.split())))
         conn.execute("INSERT INTO chunks (id, doc_id, position, text) VALUES (?, ?, 0, ?)", (doc_id, doc_id, text))
         db.save_page(conn, url, url, 200, title, "", list(PAGES))
-    index.build_index(conn)
+    bm25.build_index(conn)
     embed.embed_chunks(conn)
-    rank.compute_pagerank(conn)
-    return search.SearchEngine(conn)
+    pagerank.compute_pagerank(conn)
+    return ranker.SearchEngine(conn)
 
 
 def test_full_search_ranks_the_relevant_page_first(engine):
@@ -72,12 +74,12 @@ def test_site_filter_and_modes(engine):
 
 def test_snippet_starts_on_a_whole_word():
     words = [f"word{i}" for i in range(40)] + ["target"]
-    snippet = search.highlight(" ".join(words), "target")
+    snippet = ranker.highlight(" ".join(words), "target")
     assert snippet.startswith("…") and snippet[1:].split()[0] in words
 
 
 def test_common_words_are_not_highlighted():
-    snippet = search.highlight("How the event loop runs the tasks", "how does the event loop run")
+    snippet = ranker.highlight("How the event loop runs the tasks", "how does the event loop run")
     assert "<mark>event</mark>" in snippet and "<mark>the</mark>" not in snippet and "<mark>How</mark>" not in snippet
 
 

@@ -1,6 +1,6 @@
 # Serve:  docker compose up -d --build     then open http://localhost:8000
-# Needs:  data/serve.db and its snapshot files (python -m seekr export data/serve.db)
-# Keys:   docker compose exec seekr python -m seekr keys create NAME
+# Needs:  data/serve.db and its snapshot files (seekr export data/serve.db)
+# Keys:   docker compose exec seekr seekr keys create NAME
 services:
   seekr:
     build: .

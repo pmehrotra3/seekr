@@ -8,7 +8,7 @@ from urllib.robotparser import RobotFileParser
 import httpx
 
 from seekr import config, db
-from seekr.urls import build_scopes, in_scope, normalize_url
+from seekr.crawl.urls import build_scopes, in_scope, normalize_url
 
 RETRY_STATUSES = {None, 429, 500, 502, 503, 504}
 log = logging.getLogger(__name__)

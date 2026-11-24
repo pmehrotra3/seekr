@@ -10,7 +10,8 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from seekr import config, crawler
+from seekr import config
+from seekr.crawl import crawler
 
 log = logging.getLogger(__name__)
 # Share buttons and link shorteners are linked from everywhere but have no articles for us.

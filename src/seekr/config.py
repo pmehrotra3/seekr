@@ -2,10 +2,10 @@
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+PACKAGE = Path(__file__).resolve().parent
 
-DB_PATH = Path(os.environ.get("SEEKR_DB", ROOT / "data" / "seekr.db"))
-SEEDS_FILE = Path(os.environ.get("SEEKR_SEEDS", ROOT / "seeds.txt"))
+DB_PATH = Path(os.environ.get("SEEKR_DB", "data/seekr.db"))
+SEEDS_FILE = Path(os.environ.get("SEEKR_SEEDS", PACKAGE / "crawl" / "seeds.txt"))
 CONTACT = os.environ.get("SEEKR_CONTACT", "")  # e.g. "Your Name; you@example.com". Some sites (Wikipedia) require it
 USER_AGENT = os.environ.get("SEEKR_USER_AGENT", f"SeekrBot/0.1 ({CONTACT})" if CONTACT else "SeekrBot/0.1")
 HOST = os.environ.get("SEEKR_HOST", "127.0.0.1")

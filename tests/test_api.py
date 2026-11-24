@@ -2,7 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from test_search import PAGES
 
-from seekr import api, config, db, embed, index, rank
+from seekr import config, db
+from seekr.index import bm25, embed, pagerank
+from seekr.server import api
 
 
 @pytest.fixture(scope="module")
@@ -16,9 +18,9 @@ def setup(tmp_path_factory):
                      (doc_id, url, title, len(text.split())))
         conn.execute("INSERT INTO chunks (id, doc_id, position, text) VALUES (?, ?, 0, ?)", (doc_id, doc_id, text))
         db.save_page(conn, url, url, 200, title, "", list(PAGES))
-    index.build_index(conn)
+    bm25.build_index(conn)
     embed.embed_chunks(conn)
-    rank.compute_pagerank(conn)
+    pagerank.compute_pagerank(conn)
     user, admin = api.create_key(conn, "tests"), api.create_key(conn, "admin", admin=True)
     with TestClient(api.create_app(path)) as client:
         yield client, {"Authorization": f"Bearer {user}"}, {"Authorization": f"Bearer {admin}"}, conn

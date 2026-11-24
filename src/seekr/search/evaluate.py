@@ -6,7 +6,7 @@ from pathlib import Path
 
 from seekr import config
 
-QUERIES_FILE = config.ROOT / "evals" / "queries.jsonl"
+QUERIES_FILE = config.PACKAGE / "search" / "queries.jsonl"
 # hybrid = BM25 + vectors fused with RRF; pagerank = hybrid + link authority; full = + cross-encoder + final score
 MODES = ["bm25", "vector", "hybrid", "pagerank", "full"]
 
