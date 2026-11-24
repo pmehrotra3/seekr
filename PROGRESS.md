@@ -503,7 +503,7 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 
   Held-out reading: full beats BM25 (0.423 → 0.509) but only matches embeddings alone (0.515). Labels are mostly
   one page per query, so good results from other sites count as misses; the test split is small (33).
-- Every README command run: doctor (all ✓ on serve.db), stats, search, keys create (scratch DB), crawl, index, rank,
+- README commands run (not all, see Corrections): doctor (all ✓ on serve.db), stats, search, keys create (scratch DB), crawl, index, rank,
   export, eval, Docker (ready 8 s, 3.9 GiB, 0.54–0.77 s/search on CPU). Fixed a read-only-mmap torch warning;
   image sets HF_HUB_VERBOSITY=error.
 - Deviations from the plan, on purpose: (1) no Intel-GPU Docker image — serving on CPU is < 1.1 s p95, GPU is used
@@ -518,6 +518,15 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 - Honest resume line (measured, reproducible with `python -m seekr eval`):
   > **Seekr (Search Engine):** Built a self-hostable general web search engine over ~380K pages with a multi-stage
   > query pipeline: BM25 and embedding retrieval, PageRank link authority, rank fusion, then cross-encoder
-  > reranking, which raised MRR@10 from 0.41 (BM25) to 0.61 on 98 labelled queries; runs on an Intel Arc iGPU
-  > (~0.2 s/query) and deploys as a 13 GB Docker index serving queries in under 1 s on CPU.
+  > reranking, which raised MRR@10 from 0.42 (BM25) to 0.51 on 33 held-out queries; runs on an Intel Arc iGPU
+  > (~0.2 s median) and deploys in Docker as a 13 GB index (0.64 s median on CPU).
   The old 0.624 → 0.774 came from phase 1 (4K dev-doc pages, 22 queries) and is not true of this index.
+
+## Corrections (2026-11-24, before publishing)
+- README said the test split was "measured once". Wrong: 24 of the 33 test queries were scored in iteration 17 (and all 58
+  queries before that). No setting was chosen on them, but the result prompted adding more general dev queries.
+- "Every README command run" was wrong: `docker compose`, the `curl` API examples and the pip install steps were not
+  run (the image was tested with `docker run`). `HF_HUB_VERBOSITY` was added after the last image build: untested.
+- On the 33 test queries embeddings alone (0.515) score about the same as the full pipeline (0.509); with this many
+  queries that gap is noise. The 0.41 -> 0.61 figure includes the dev queries. CPU p95 is 1.05 s, not "under 1 s".
+- The resume line above was changed to the test-split numbers.

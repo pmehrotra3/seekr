@@ -11,7 +11,9 @@ Index: **378,886 pages** (2.16M chunks) from ~110 sites: news, science, health, 
 sport, travel, food, how-to, law, finance, Wikipedia/Wiktionary/Wikivoyage, and tech docs.
 
 Search quality on **98 hand-labelled queries** (`python -m seekr eval`; MRR@10 / nDCG@10). Weights were tuned on the
-65 `dev` queries only; the 33 `test` queries were measured once, at the end.
+`dev` queries only. The `test` queries were not used to pick settings, but 24 of the 33 were also scored in an earlier
+run (which showed the reranker not helping, and led to more `dev` queries), so treat `test` as held out, not unseen.
+"All 98" includes the 65 `dev` queries, so it is optimistic.
 
 | stage | all 98 | dev 65 | test 33 | p50 / p95, Arc GPU (all 98) | p50 / p95, CPU (test 33) |
 |---|---|---|---|---|---|

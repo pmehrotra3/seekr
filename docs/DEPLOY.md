@@ -46,6 +46,8 @@ ready **6 s** after start, **3.6 GiB** RAM, searches **0.54–0.97 s** (8 querie
 
 ## Server size
 
+Estimates from the laptop measurements above; not tested on a small server.
+
 - **RAM:** 8 GB (3.6 GB for the process + OS page cache for the database). 4 GB will swap.
 - **CPU:** 4+ cores. Reranking the top 30 results took 0.73 s on 4 threads of the machine above; set
   `SEEKR_RERANK_TOP=10` to roughly halve search time for a small quality cost (dev MRR@10 0.713 → 0.709).
