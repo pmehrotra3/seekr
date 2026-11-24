@@ -530,3 +530,7 @@ Scope change (user, 2026-11-22): **general web search, not only developer docs.*
 - On the 33 test queries embeddings alone (0.515) score about the same as the full pipeline (0.509); with this many
   queries that gap is noise. The 0.41 -> 0.61 figure includes the dev queries. CPU p95 is 1.05 s, not "under 1 s".
 - The resume line above was changed to the test-split numbers.
+
+### 2026-11-24 — GitHub
+- Private repository `pmehrotra3/seekr` created and `main` pushed. First CI run (45445490951) passed: ruff + pytest on
+  CPU, Python 3.12. This replaces the earlier notes that CI had never run.
