@@ -57,7 +57,7 @@ Also `/api/v1/page` and `/api/v1/stats`. Each key may make 60 requests per minut
 
 ```bash
 seekr export data/serve.db             # only what search needs
-docker compose up -d --build           # http://127.0.0.1:8000
+docker compose up -d --build           # http://127.0.0.1:8000 (other port: SEEKR_HOST_PORT=…)
 docker compose exec seekr seekr keys create my-app
 ```
 
