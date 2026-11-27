@@ -55,3 +55,15 @@ def test_anyone_can_get_a_free_api_key_that_works(client):
     assert client.post("/ui/keys", json={}).status_code == 200
     assert client.post("/ui/keys", json={}).status_code == 429  # third key within the hour
     assert client.post("/ui/keys", json={"name": "x" * 81}).status_code == 422
+
+
+def test_pages_are_never_served_stale_from_a_cache(client):
+    for path in ("/", "/app.js", "/style.css"):
+        assert client.get(path).headers["cache-control"] == "no-cache"
+
+
+def test_asset_urls_change_when_their_content_does(client):
+    import re
+
+    versions = re.findall(r'(?:app\.js|style\.css)\?v=([0-9a-f]{10})"', client.get("/").text)
+    assert len(versions) == 2 and versions[0] == versions[1]

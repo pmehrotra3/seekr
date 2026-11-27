@@ -53,7 +53,8 @@ REFRESH_SECONDS = float(os.environ.get("SEEKR_REFRESH_SECONDS", "300"))  # how o
 
 # REST API
 RATE_LIMIT_PER_MINUTE = int(os.environ.get("SEEKR_RATE_LIMIT_PER_MINUTE", "60"))  # per API key
-TRUSTED_PROXIES = os.environ.get("SEEKR_TRUSTED_PROXIES", "127.0.0.1")  # reverse proxy IPs ("*" inside Docker)
+# Reverse proxies (IPs or ranges) whose X-Forwarded-For is believed
+TRUSTED_PROXIES = os.environ.get("SEEKR_TRUSTED_PROXIES", "127.0.0.1")
 CORS_ORIGINS = os.environ.get("SEEKR_CORS_ORIGINS", "*").split(",")  # websites allowed to call the API
 
 # Website

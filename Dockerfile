@@ -1,6 +1,7 @@
 FROM python:3.12-slim
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1 HF_HOME=/app/models SEEKR_HOST=0.0.0.0 SEEKR_DB=/app/data/serve.db SEEKR_TRUSTED_PROXIES=*
+ENV PYTHONUNBUFFERED=1 HF_HOME=/app/models SEEKR_HOST=0.0.0.0 SEEKR_DB=/app/data/serve.db \
+    SEEKR_TRUSTED_PROXIES=127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 
 # CPU-only PyTorch first: the default build adds gigabytes of GPU libraries
 RUN pip install --no-cache-dir torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu

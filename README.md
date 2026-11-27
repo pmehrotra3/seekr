@@ -66,7 +66,7 @@ docker compose exec seekr seekr keys create my-app
 ```
 
 To move to a server, copy `data/serve.db*` into its `data/` folder and put an HTTPS reverse proxy in front. The container
-listens on localhost and trusts `X-Forwarded-For`; if you expose it directly, set `SEEKR_TRUSTED_PROXIES` to your proxy's IP.
+listens on localhost and believes `X-Forwarded-For` only from local hops (`SEEKR_TRUSTED_PROXIES`), so visitors cannot fake their IP to dodge rate limits.
 
 On a 16-core Intel laptop, CPU only, the 379K-page index takes 13 GB of disk and about 4 GB of RAM.
 
