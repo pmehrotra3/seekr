@@ -3,20 +3,91 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Seekr</title>
+  <title>Seekr: search without the noise</title>
+  <meta name="description" content="An independent search engine over 380,000 hand-picked pages. No ads, no cookies, and a free developer API.">
+  <meta property="og:title" content="Seekr: search without the noise">
+  <meta property="og:description" content="An independent search engine over 380,000 hand-picked pages. No ads, no cookies, and a free developer API.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#2f6bff">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='13' cy='13' r='8' fill='none' stroke='%232f6bff' stroke-width='4'/%3E%3Cpath d='M19 19l8 8' stroke='%232f6bff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <button id="theme" class="theme" type="button" aria-label="Switch light or dark mode">◐</button>
-  <main>
-    <a class="wordmark" href="/" aria-label="Seekr home">Seek<span>r</span></a>
-    <p class="tagline">Search the web without the SEO spam.</p>
-    <form id="search-form" role="search">
-      <input id="q" type="search" placeholder="Search the web…" autocomplete="off" autofocus aria-label="Search">
-      <button type="submit">Search</button>
+  <header class="bar">
+    <a class="logo" href="/" aria-label="Seekr home">Seek<span>r</span></a>
+    <form class="search" role="search">
+      <input name="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search">
+      <button type="submit" aria-label="Search">Search</button>
     </form>
-    <p class="hint">Press <kbd>/</kbd> to search from anywhere</p>
+    <nav>
+      <a href="/#api">API</a>
+      <button class="theme" type="button" aria-label="Switch light or dark mode">◐</button>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <h1 class="logo big">Seek<span>r</span></h1>
+      <p class="tagline">Search 380,000 hand-picked pages. No ads, no cookies.</p>
+      <form class="search" role="search">
+        <input name="q" type="search" placeholder="Ask anything…" autocomplete="off" autofocus aria-label="Search">
+        <button type="submit">Search</button>
+      </form>
+      <p class="try">Try
+        <a href="/?q=how+do+black+holes+form">how do black holes form</a>
+        <a href="/?q=banana+bread+recipe">banana bread recipe</a>
+        <a href="/?q=yosemite+national+park">Yosemite National Park</a>
+      </p>
+    </section>
+
+    <section class="features">
+      <div class="card">
+        <h2>Finds what you mean</h2>
+        <p>Seekr matches your words and their meaning, then a neural model reads each result against your question
+          before ranking it.</p>
+      </div>
+      <div class="card">
+        <h2>No ads, no cookies</h2>
+        <p>There is nothing to sell. The only thing this page saves is your light or dark mode choice, in your own
+          browser.</p>
+      </div>
+      <div class="card">
+        <h2>Trusted sources</h2>
+        <p>News, science, health, history, travel, food, how-to and reference sites, crawled politely and indexed
+          from scratch.</p>
+      </div>
+    </section>
+
+    <section id="api" class="api">
+      <h2>Free developer API</h2>
+      <p>Put Seekr's results in your own app. Get a key instantly: no account, no email.</p>
+      <form id="key-form" class="key-form">
+        <input name="name" maxlength="80" placeholder="What are you building? (optional)" aria-label="What are you building?">
+        <button type="submit">Get a free API key</button>
+      </form>
+      <div id="key-box" class="key-box" hidden>
+        <p>Your key. Copy it now: it is shown only once.</p>
+        <div class="key-row"><code id="key"></code><button id="copy" type="button">Copy</button></div>
+      </div>
+      <p id="key-status" class="key-status" aria-live="polite"></p>
+      <pre><code id="example">curl -H "Authorization: Bearer YOUR_KEY" \
+  "https://seekr.pranavmehrotra.com/api/v1/search?q=black+holes&amp;limit=3"</code></pre>
+      <ul class="facts">
+        <li>JSON results with title, link, snippet, image and ranking signals</li>
+        <li>60 requests per minute per key</li>
+        <li><a href="/docs">Full API reference</a></li>
+      </ul>
+    </section>
+
+    <section class="about">
+      <h2>About</h2>
+      <p>Seekr is an independent project by <a href="https://pranavmehrotra.com">Pranav Mehrotra</a>. The crawler,
+        index and ranking are built from scratch and run on one machine. The code is
+        <a href="https://github.com/pmehrotra3/seekr">open source</a>.</p>
+    </section>
+  </main>
+
+  <main id="results-view" hidden>
     <p id="status" class="status" aria-live="polite"></p>
     <ol id="results" class="results"></ol>
     <nav id="pager" class="pager" hidden>
@@ -25,7 +96,11 @@
       <button id="next" type="button">Next →</button>
     </nav>
   </main>
-  <footer>Open source · runs on your own machine · <a href="/docs">API</a></footer>
-  <script src="app.js"></script>
+
+  <footer>
+    <a href="/#api">API</a> · <a href="/docs">API reference</a> ·
+    <a href="https://github.com/pmehrotra3/seekr">GitHub</a> · <a href="https://pranavmehrotra.com">Pranav Mehrotra</a>
+  </footer>
+  <script src="/app.js"></script>
 </body>
 </html>

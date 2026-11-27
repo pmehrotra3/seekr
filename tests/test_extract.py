@@ -46,3 +46,33 @@ def test_index_pages_is_incremental(tmp_path):
     db.save_page(conn, "https://x.com/a", "https://x.com/a", 200, "A", ARTICLE, [])
     assert extract.index_pages(conn)["new"] == 1
     assert sum(extract.index_pages(conn).values()) == 0
+
+
+def test_page_image_reads_the_preview_tag():
+    page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'
+    assert extract.page_image(page, "https://site.com/post") == "https://site.com/img/a.jpg?x=1&y=2"
+    assert extract.page_image('<meta name="twitter:image" content="https://cdn.com/b.png">', "") == "https://cdn.com/b.png"
+    assert extract.page_image('<meta property="og:image" content="http://old.com/c.jpg">', "") == ""  # not https
+    assert extract.page_image("<p>no image</p>", "https://site.com/") == ""
+
+
+def test_older_pages_get_their_images_filled_in(tmp_path):
+    conn = db.connect(tmp_path / "t.db")
+    page = '<meta property="og:image" content="https://cdn.com/x.jpg">'
+    db.save_page(conn, "https://a.com/", "https://a.com/", 200, "A", page, [])
+    conn.execute("INSERT INTO documents (url, word_count) VALUES ('https://a.com/', 10)")  # indexed before images
+    assert extract.add_images(conn) == 1
+    assert conn.execute("SELECT image FROM documents").fetchone()[0] == "https://cdn.com/x.jpg"
+    assert extract.add_images(conn) == 0
+
+
+def test_databases_from_before_images_are_upgraded(tmp_path):
+    import sqlite3
+
+    old = sqlite3.connect(tmp_path / "old.db")
+    old.execute("CREATE TABLE documents (id INTEGER PRIMARY KEY, url TEXT UNIQUE NOT NULL, title TEXT, description TEXT"
+                ", published TEXT, language TEXT, word_count INTEGER, content_hash TEXT, duplicate_of INTEGER)")
+    old.commit()
+    old.close()
+    columns = [row[1] for row in db.connect(tmp_path / "old.db").execute("PRAGMA table_info(documents)")]
+    assert "image" in columns

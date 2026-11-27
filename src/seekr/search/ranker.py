@@ -14,7 +14,7 @@ from seekr import config
 from seekr.crawl import discover
 from seekr.index import bm25, embed
 
-CHUNK_SQL = """SELECT c.doc_id, c.text, d.url, d.title, d.published, d.language, d.word_count
+CHUNK_SQL = """SELECT c.doc_id, c.text, d.url, d.title, d.published, d.language, d.word_count, d.image
                FROM chunks c JOIN documents d ON d.id = c.doc_id WHERE c.id = ?"""
 STOPWORDS = bm25.STOPWORDS
 _reranker = None
@@ -154,6 +154,7 @@ class SearchEngine:
             "url": page["url"],
             "title": page["title"] or page["url"],
             "snippet": highlight(page["text"], query),
+            "image": page["image"] or None,
             "relevance": page.get("relevance"),
             "final_score": page.get("final_score"),
             "signals": {

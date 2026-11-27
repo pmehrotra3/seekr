@@ -125,3 +125,8 @@ def test_hosts_with_unreachable_robots_are_logged_and_skipped(tmp_path, caplog):
     with caplog.at_level("WARNING", logger="seekr.crawl.crawler"):
         asyncio.run(crawler.crawl(["https://example.com/"], conn, transport=down))
     assert "example.com: robots.txt unreachable" in caplog.text
+
+
+def test_only_the_page_title_counts_not_icon_titles():
+    page = '<title>Yosemite (U.S. National Park Service)</title><svg><title>Lock</title></svg>'
+    assert crawler.parse_page(page, "https://nps.gov/")[0] == "Yosemite (U.S. National Park Service)"

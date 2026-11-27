@@ -37,15 +37,15 @@ def create_key(conn, name, admin=False):
 
 
 class RateLimiter:
-    """Allows `limit` requests per key in any 60-second window (a "sliding window")."""
+    """Allows `limit` requests per key in any `window`-second window (a "sliding window")."""
 
-    def __init__(self, limit):
-        self.limit, self.hits = limit, defaultdict(deque)
+    def __init__(self, limit, window=60):
+        self.limit, self.window, self.hits = limit, window, defaultdict(deque)
 
     def allow(self, key, now=None):
         now = time.monotonic() if now is None else now
         hits = self.hits[key]
-        while hits and hits[0] <= now - 60:
+        while hits and hits[0] <= now - self.window:
             hits.popleft()
         if len(hits) >= self.limit:
             return False
@@ -66,6 +66,7 @@ class Result(BaseModel):
     url: str
     title: str
     snippet: str  # HTML: page text is escaped, query words are wrapped in <mark>
+    image: str | None = None  # the page's preview image (https), if it has one
     relevance: float | None
     final_score: float | None
     signals: Signals

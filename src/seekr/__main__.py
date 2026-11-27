@@ -34,6 +34,7 @@ def cmd_index(args):
     print("Extracting text from crawled pages:")
     counts = extract.index_pages(conn)
     print(f"new: {counts['new']}  duplicates: {counts['duplicate']}  no main text: {counts['empty']}")
+    print(f"Preview images: checked {extract.add_images(conn)} older pages")
     print(f"Keyword index: added {bm25.build_index(conn)} chunks")
     print(f"Embedding chunks on {embed.best_device()}:")
     print(f"embedded: {embed.embed_chunks(conn)}")

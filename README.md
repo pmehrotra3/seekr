@@ -46,12 +46,16 @@ Settings are in [config.py](src/seekr/config.py); override any with an environme
 
 ## API
 
+Live at **[seekr.pranavmehrotra.com](https://seekr.pranavmehrotra.com)**: get a free key on the home page
+(no account), then:
+
 ```bash
-seekr keys create my-app     # prints a key once; only its hash is stored
-curl -H "Authorization: Bearer $KEY" "http://127.0.0.1:8000/api/v1/search?q=rust+ownership&limit=3"
+curl -H "Authorization: Bearer $KEY" "https://seekr.pranavmehrotra.com/api/v1/search?q=black+holes&limit=3"
 ```
 
-Also `/api/v1/page` and `/api/v1/stats`. Each key may make 60 requests per minute.
+Results include title, link, snippet, preview image and ranking signals. Also `/api/v1/page` and `/api/v1/stats`;
+reference at [/docs](https://seekr.pranavmehrotra.com/docs). Each key may make 60 requests per minute. On your own
+instance, `seekr keys create NAME` makes a key from the command line.
 
 ## Hosting
 

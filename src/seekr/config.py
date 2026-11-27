@@ -57,6 +57,7 @@ TRUSTED_PROXIES = os.environ.get("SEEKR_TRUSTED_PROXIES", "127.0.0.1")  # revers
 CORS_ORIGINS = os.environ.get("SEEKR_CORS_ORIGINS", "*").split(",")  # websites allowed to call the API
 
 # Website
+KEY_SIGNUPS_PER_HOUR = int(os.environ.get("SEEKR_KEY_SIGNUPS_PER_HOUR", "3"))  # free API keys per visitor IP
 UI_RATE_LIMIT_PER_MINUTE = int(os.environ.get("SEEKR_UI_RATE_LIMIT_PER_MINUTE", "30"))  # per visitor IP
 
 # Operations

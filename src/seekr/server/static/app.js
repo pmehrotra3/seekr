@@ -1,30 +1,26 @@
-// Seekr's search page: reads the query from the address bar, asks the server, shows the results.
+// Seekr's page: the landing page, the results view and free API key signup.
 const PAGE_SIZE = 10;
 const MAX_RESULTS = 30; // the reranker scores the best 30 pages per query
 
-const form = document.getElementById("search-form");
-const input = document.getElementById("q");
-const statusLine = document.getElementById("status");
-const resultList = document.getElementById("results");
-const pager = document.getElementById("pager");
-const prevButton = document.getElementById("prev");
-const nextButton = document.getElementById("next");
-const pageLabel = document.getElementById("page-label");
+const $ = (id) => document.getElementById(id);
+const forms = document.querySelectorAll("form.search");
+const inputs = [...forms].map((form) => form.elements.q);
 
 function readUrl() {
   const params = new URLSearchParams(location.search);
-  const page = Math.max(1, parseInt(params.get("page"), 10) || 1);
-  return { query: params.get("q") || "", page };
+  return { query: (params.get("q") || "").trim(), page: Math.max(1, parseInt(params.get("page"), 10) || 1) };
 }
 
 async function search(query, page) {
-  input.value = query;
+  inputs.forEach((input) => (input.value = query));
   document.body.classList.toggle("searching", query !== "");
-  document.title = query ? `${query} - Seekr` : "Seekr";
-  resultList.replaceChildren();
-  pager.hidden = true;
-  statusLine.textContent = query ? "Searching…" : "";
+  $("home").hidden = query !== "";
+  $("results-view").hidden = query === "";
+  document.title = query ? `${query} - Seekr` : "Seekr: search without the noise";
+  $("results").replaceChildren();
+  $("pager").hidden = true;
   if (!query) return;
+  $("status").textContent = "Searching…";
   try {
     const offset = (page - 1) * PAGE_SIZE;
     const response = await fetch(`/ui/search?q=${encodeURIComponent(query)}&offset=${offset}`);
@@ -32,83 +28,126 @@ async function search(query, page) {
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "That search didn't work.");
     showResults(data, page);
   } catch (error) {
-    statusLine.textContent = error.message;
+    $("status").textContent = error.message;
   }
 }
 
 function showResults(data, page) {
   const first = (page - 1) * PAGE_SIZE + 1;
-  const last = first + data.results.length - 1;
-  statusLine.textContent = data.results.length
-    ? `Results ${first}–${last} · ${data.took_ms} ms`
-    : `No results for “${data.query}”.`;
-  resultList.append(...data.results.map(resultItem));
-  pageLabel.textContent = `Page ${page}`;
-  prevButton.disabled = page === 1;
-  nextButton.disabled = data.results.length < PAGE_SIZE || page * PAGE_SIZE >= MAX_RESULTS;
-  pager.hidden = prevButton.disabled && nextButton.disabled;
+  $("status").textContent = data.results.length
+    ? `Results ${first}–${first + data.results.length - 1} · ${(data.took_ms / 1000).toFixed(2)} seconds`
+    : `No results for “${data.query}”. Try different words.`;
+  $("results").append(...data.results.map(resultItem));
+  $("page-label").textContent = `Page ${page}`;
+  $("prev").disabled = page === 1;
+  $("next").disabled = data.results.length < PAGE_SIZE || page * PAGE_SIZE >= MAX_RESULTS;
+  $("pager").hidden = $("prev").disabled && $("next").disabled;
+}
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  node.className = className;
+  if (text) node.textContent = text; // textContent never interprets HTML, so page text can't inject code
+  return node;
 }
 
 function resultItem(result) {
-  const item = document.createElement("li");
-  item.className = "result";
-  const title = document.createElement("a");
-  title.className = "title";
+  const url = new URL(result.url);
+  const site = element("div", "site", url.hostname.replace(/^www\./, ""));
+  const title = element("a", "title", result.title);
   title.href = result.url;
-  title.textContent = result.title; // textContent never interprets HTML, so a page title can't inject code
-  const meta = document.createElement("div");
-  meta.className = "meta";
-  const badge = document.createElement("span");
-  badge.className = `badge ${relevanceLevel(result.relevance)}`;
-  badge.textContent = `${Math.round(result.relevance * 100)}% relevant`;
-  badge.title = "How well this page answers your query, according to the relevance model";
-  const url = document.createElement("span");
-  url.className = "url";
-  url.textContent = result.url.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  meta.append(badge, url);
-  const snippet = document.createElement("p");
-  snippet.className = "snippet";
+  const snippet = element("p", "snippet");
   snippet.innerHTML = result.snippet; // safe: the server escaped the page text and only added <mark> tags
-  item.append(title, meta, snippet);
+  const text = element("div", "text");
+  text.append(site, title, snippet);
+  const item = element("li", "result");
+  item.append(text);
+  if (result.image) {
+    const image = element("img", "thumb");
+    image.src = result.image; // https only (checked on the server)
+    image.alt = "";
+    image.loading = "lazy";
+    image.referrerPolicy = "no-referrer"; // don't tell the image's site what was searched
+    image.onerror = () => image.remove();
+    item.append(image);
+  }
   return item;
 }
 
-function relevanceLevel(relevance) {
-  if (relevance >= 0.8) return "high";
-  return relevance >= 0.4 ? "mid" : "low";
-}
-
-function go(query, page) {
+function go(query, page = 1) {
   const pagePart = page > 1 ? `&page=${page}` : "";
   history.pushState(null, "", query ? `/?q=${encodeURIComponent(query)}${pagePart}` : "/");
   window.scrollTo(0, 0);
   search(query, page);
 }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault(); // stop the browser's own page reload; we fetch the results ourselves
-  go(input.value.trim(), 1);
-});
-prevButton.addEventListener("click", () => go(readUrl().query, readUrl().page - 1));
-nextButton.addEventListener("click", () => go(readUrl().query, readUrl().page + 1));
+forms.forEach((form) =>
+  form.addEventListener("submit", (event) => {
+    event.preventDefault(); // we fetch the results ourselves instead of reloading the page
+    go(form.elements.q.value.trim());
+  }),
+);
+document.querySelectorAll(".try a").forEach((link) =>
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    go(new URL(link.href).searchParams.get("q"));
+  }),
+);
+$("prev").addEventListener("click", () => go(readUrl().query, readUrl().page - 1));
+$("next").addEventListener("click", () => go(readUrl().query, readUrl().page + 1));
 window.addEventListener("popstate", () => search(readUrl().query, readUrl().page)); // Back/Forward buttons
 document.addEventListener("keydown", (event) => {
-  if (event.key === "/" && document.activeElement !== input) {
+  const typing = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+  if (event.key === "/" && !typing) {
     event.preventDefault();
+    const input = inputs.find((input) => input.offsetParent) || inputs[0]; // the visible search box
     input.focus();
     input.select();
   }
 });
 
-// Dark mode: follow the system setting until the visitor picks one with the button.
+// Free API key: the server returns it once; it only keeps a hash.
+$("example").textContent = $("example").textContent.replace("https://seekr.pranavmehrotra.com", location.origin);
+$("key-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.target.querySelector("button");
+  button.disabled = true;
+  $("key-status").textContent = "";
+  try {
+    const response = await fetch("/ui/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: event.target.elements.name.value }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Couldn't create a key.");
+    $("key").textContent = data.key;
+    $("key-box").hidden = false;
+    $("example").textContent = $("example").textContent.replace(/Bearer \S+"/, `Bearer ${data.key}"`);
+  } catch (error) {
+    $("key-status").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+$("copy").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText($("key").textContent);
+    $("copy").textContent = "Copied";
+  } catch (error) {
+    getSelection().selectAllChildren($("key")); // clipboard blocked: select it so it can be copied by hand
+  }
+});
+
+// Dark mode: follow the system setting until the visitor picks one.
 const root = document.documentElement;
 try {
   const saved = localStorage.getItem("seekr-theme");
   if (saved) root.dataset.theme = saved;
 } catch (error) {} // storage can be blocked (private mode); the page still works
-document.getElementById("theme").addEventListener("click", () => {
-  const isDark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  root.dataset.theme = isDark ? "light" : "dark";
+document.querySelector(".theme").addEventListener("click", () => {
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
   try {
     localStorage.setItem("seekr-theme", root.dataset.theme);
   } catch (error) {}

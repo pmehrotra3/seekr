@@ -47,6 +47,7 @@ def test_search(setup):
     assert body["results"][0]["url"] == "https://x.com/rust-ownership"
     assert 0 <= body["results"][0]["relevance"] <= 1
     assert "pagerank" in body["results"][0]["signals"]
+    assert "image" in body["results"][0]
 
 
 def test_bad_parameters_are_rejected(setup):

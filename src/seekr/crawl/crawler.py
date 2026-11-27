@@ -15,11 +15,11 @@ log = logging.getLogger(__name__)
 
 
 class LinkParser(HTMLParser):
-    """Collects the <title> text, every <a href> and every <iframe src> on a page."""
+    """Collects the page's <title> text, every <a href> and every <iframe src> on a page."""
 
     def __init__(self):
         super().__init__()
-        self.title, self.links, self.in_title = "", [], False
+        self.title, self.links, self.in_title, self.titles_seen = "", [], False, 0
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
@@ -28,7 +28,8 @@ class LinkParser(HTMLParser):
         elif tag == "iframe" and attrs.get("src"):  # some docs load their table of contents this way
             self.links.append(attrs["src"])
         elif tag == "title":
-            self.in_title = True
+            self.titles_seen += 1
+            self.in_title = self.titles_seen == 1  # later <title>s label icons (SVG), e.g. "Lock"
 
     def handle_endtag(self, tag):
         if tag == "title":

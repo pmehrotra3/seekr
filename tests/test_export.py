@@ -24,6 +24,7 @@ def make_crawl_db(path):
         conn.execute("INSERT INTO pagerank VALUES (?, 0.2)", (doc_id,))
     conn.execute("INSERT INTO pages (url, html) VALUES ('https://a.com/en', '<html>big</html>')")
     conn.execute("INSERT INTO sites VALUES ('a.com', 3, 0.5)")
+    conn.execute("UPDATE documents SET image = 'https://a.com/photo.jpg' WHERE id = 1")
     conn.commit()
     return conn
 
@@ -38,6 +39,17 @@ def test_export_keeps_only_searchable_english_pages(tmp_path):
     assert [hit[0] for hit in bm25.keyword_search(out, "ownership")] in ([1, 5], [5, 1])
     assert list(embed.load_vectors(out)[0]) == [1, 5]
     assert (tmp_path / "serve.db.vectors.npy").exists()
+    assert out.execute("SELECT image FROM documents WHERE id = 1").fetchone()[0] == "https://a.com/photo.jpg"
+
+
+def test_export_drops_site_logos(tmp_path, monkeypatch):
+    monkeypatch.setattr(export, "LOGO_PAGES", 1)  # an image on 2+ pages counts as a logo
+    conn = make_crawl_db(tmp_path / "crawl.db")
+    conn.execute("UPDATE documents SET image = 'https://a.com/logo.png'")
+    conn.commit()
+    export.export(conn, tmp_path / "serve.db")
+    images = {row[0] for row in db.connect(tmp_path / "serve.db").execute("SELECT image FROM documents")}
+    assert images == {""}
 
 
 def test_export_never_overwrites(tmp_path):

@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS documents (
     language     TEXT,
     word_count   INTEGER,
     content_hash TEXT,
-    duplicate_of INTEGER
+    duplicate_of INTEGER,
+    image        TEXT  -- preview image (https URL), '' if none, NULL if not looked for yet
 );
 CREATE INDEX IF NOT EXISTS documents_hash ON documents (content_hash);
 
@@ -73,6 +74,8 @@ def connect(path=None):
     conn.execute("PRAGMA journal_mode=WAL")  # lets crawl, index and serve use the database at the same time
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    if "image" not in {row[1] for row in conn.execute("PRAGMA table_info(documents)")}:  # made before images
+        conn.execute("ALTER TABLE documents ADD COLUMN image TEXT")
     return conn
 
 

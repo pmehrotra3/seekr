@@ -25,7 +25,7 @@ def client(tmp_path_factory):
 
 def test_home_page_and_assets_are_served(client):
     home = client.get("/")
-    assert home.status_code == 200 and 'class="wordmark"' in home.text
+    assert home.status_code == 200 and 'id="key-form"' in home.text
     assert client.get("/app.js").headers["content-type"].startswith("text/javascript")
     assert client.get("/style.css").headers["content-type"].startswith("text/css")
 
@@ -43,3 +43,15 @@ def test_ui_search_is_rate_limited_per_visitor(client):
     client.app.state.ui_limiter = api.RateLimiter(limit=1)
     assert client.get("/ui/search?q=pasta").status_code == 200
     assert client.get("/ui/search?q=pasta").status_code == 429
+
+
+def test_anyone_can_get_a_free_api_key_that_works(client):
+    client.app.state.signup_limiter = api.RateLimiter(limit=2, window=3600)
+    key = client.post("/ui/keys", json={"name": "my weekend project"}).json()["key"]
+    response = client.get("/api/v1/search?q=pasta", headers={"Authorization": f"Bearer {key}"})
+    assert response.status_code == 200
+    admin_only = client.post("/api/v1/crawl/seeds", json={"urls": []}, headers={"Authorization": f"Bearer {key}"})
+    assert admin_only.status_code == 403  # never an admin key
+    assert client.post("/ui/keys", json={}).status_code == 200
+    assert client.post("/ui/keys", json={}).status_code == 429  # third key within the hour
+    assert client.post("/ui/keys", json={"name": "x" * 81}).status_code == 422

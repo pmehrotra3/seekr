@@ -1,14 +1,28 @@
 """Turn raw HTML into clean text, split it into overlapping chunks, and store them."""
 import hashlib
+import html as html_lib
 import json
 import re
 from concurrent.futures import ProcessPoolExecutor
+from urllib.parse import urljoin
 
 import trafilatura
 
 from seekr import config
 
 HTML_LANG = re.compile(r"<html[^>]*\blang=[\"']?([a-zA-Z-]+)", re.IGNORECASE)
+PREVIEW_TAG = re.compile(r"<meta[^>]+(?:property|name)=[\"'](?:og:image|twitter:image)(?::src)?[\"'][^>]*>", re.I)
+CONTENT = re.compile(r"content=[\"']([^\"']+)", re.I)
+
+
+def page_image(html, url):
+    """The preview image a page declares for link sharing (og:image), as an https URL, or ''."""
+    for tag in PREVIEW_TAG.findall(html[:100_000]):  # it lives in <head>
+        found = CONTENT.search(tag)
+        src = urljoin(url, html_lib.unescape(found.group(1).strip())) if found else ""
+        if src.startswith("https://"):  # http images would be blocked on an https site
+            return src
+    return ""
 
 
 def extract(html, url, page_title=""):
@@ -24,6 +38,7 @@ def extract(html, url, page_title=""):
         "published": data.get("date") or "",
         "language": lang.group(1).lower() if lang else "",
         "text": data["text"].replace("¶", ""),  # Sphinx docs add ¶ after every heading
+        "image": page_image(html, url),
     }
 
 
@@ -42,7 +57,7 @@ def content_hash(text):
 def save_document(conn, url, doc):
     """Insert one document and its chunks. Returns 'new', 'duplicate' or 'empty'."""
     if doc is None:
-        conn.execute("INSERT INTO documents (url, word_count) VALUES (?, 0)", (url,))
+        conn.execute("INSERT INTO documents (url, word_count, image) VALUES (?, 0, '')", (url,))
         return "empty"
     digest = content_hash(doc["text"])
     original = conn.execute(
@@ -50,9 +65,9 @@ def save_document(conn, url, doc):
     ).fetchone()
     cur = conn.execute(
         "INSERT INTO documents (url, title, description, published, language, word_count, content_hash,"
-        " duplicate_of) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        " duplicate_of, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (url, doc["title"], doc["description"], doc["published"], doc["language"],
-         len(doc["text"].split()), digest, original["id"] if original else None),
+         len(doc["text"].split()), digest, original["id"] if original else None, doc["image"]),
     )
     if original:
         return "duplicate"
@@ -81,3 +96,17 @@ def index_pages(conn, batch_size=1000):
             conn.commit()
             print(f"  extracted {sum(counts.values())} pages...", flush=True)
     return counts
+
+
+def add_images(conn, batch_size=2000):
+    """Look up preview images for documents indexed before Seekr extracted them. Returns how many were checked."""
+    sql = """SELECT d.id, p.html, p.final_url FROM documents d JOIN pages p ON p.url = d.url
+             WHERE d.image IS NULL LIMIT ?"""
+    total = 0
+    while rows := conn.execute(sql, (batch_size,)).fetchall():
+        updates = [(page_image(html or "", final_url or ""), doc_id) for doc_id, html, final_url in rows]
+        conn.executemany("UPDATE documents SET image = ? WHERE id = ?", updates)
+        conn.commit()
+        total += len(rows)
+        print(f"  checked {total} pages for images...", flush=True)
+    return total
