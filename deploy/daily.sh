@@ -4,7 +4,17 @@
 # Run it from cron, e.g.:  17 3 * * *  /path/to/seekr/deploy/daily.sh > /path/to/seekr/data/daily.log 2>&1
 set -eu
 cd "$(dirname "$0")/.."
+# cron starts with almost no environment: find docker and talk to the daemon that runs the site
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+export DOCKER_HOST="${DOCKER_HOST:-unix:///var/run/docker.sock}"
 export SEEKR_MAX_PAGES_PER_DOMAIN="${SEEKR_MAX_PAGES_PER_DOMAIN:-20000}"
+
+# Only one refresh at a time: a second copy started meanwhile exits instead of clashing.
+exec 9>data/daily.lock
+if ! flock -n 9; then
+  echo "another daily refresh is already running; exiting" >&2
+  exit 0
+fi
 
 .venv/bin/seekr daily data/serve-next.db
 if [ -s data/serve-next.db-wal ]; then  # the export did not close cleanly: keep serving the old index
