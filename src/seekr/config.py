@@ -44,7 +44,7 @@ EMBED_BATCH = int(os.environ.get("SEEKR_EMBED_BATCH", "64"))
 # CPU threads for model math. Laptop CPUs mix fast and slow cores; using every core makes the fast ones wait
 # (measured on a 16-core Core Ultra: 12 threads rerank in 0.47 s, 16 threads in 2.2 s). Small servers use all cores.
 _CORES = os.cpu_count() or 1
-CPU_THREADS = int(os.environ.get("SEEKR_CPU_THREADS", _CORES if _CORES <= 8 else _CORES * 3 // 4))
+CPU_THREADS = int(os.environ.get("SEEKR_CPU_THREADS") or (_CORES if _CORES <= 8 else _CORES * 3 // 4))
 DEVICE = os.environ.get("SEEKR_DEVICE", "")  # "", "cuda", "xpu" (Intel Arc), "mps" or "cpu"; "" picks the best one
 
 # Search and relevance scoring

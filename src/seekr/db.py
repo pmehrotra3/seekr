@@ -74,7 +74,9 @@ CREATE TABLE IF NOT EXISTS discovered (
 def connect(path=None):
     path = Path(path or config.DB_PATH)
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path, timeout=60)  # wait (up to 60 s) for another program's write instead of failing
+    # Wait up to 10 minutes for another program's write instead of failing: crawl, index, archive and imports
+    # run side by side, and on a busy machine one batch can take minutes. Reads never wait (WAL).
+    conn = sqlite3.connect(path, timeout=600)
     conn.execute("PRAGMA journal_mode=WAL")  # lets crawl, index and serve use the database at the same time
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)

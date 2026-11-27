@@ -10,4 +10,6 @@ services:
       - ./data:/app/data  # the index stays on your disk, outside the container
     environment:
       SEEKR_LOG_LEVEL: INFO
+      SEEKR_CPU_THREADS: ${SEEKR_SERVE_THREADS:-}  # fewer threads stay fast when other work fills the CPU
+    cpu_shares: 4096  # under load, searches get the CPU before other containers (default weight 1024)
     restart: unless-stopped
