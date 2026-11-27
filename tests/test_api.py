@@ -21,9 +21,10 @@ def setup(tmp_path_factory):
     bm25.build_index(conn)
     embed.embed_chunks(conn)
     pagerank.compute_pagerank(conn)
-    user, admin = api.create_key(conn, "tests"), api.create_key(conn, "admin", admin=True)
-    with TestClient(api.create_app(path)) as client:
-        yield client, {"Authorization": f"Bearer {user}"}, {"Authorization": f"Bearer {admin}"}, conn
+    keys = api.keys_db(path.parent / "keys.db")
+    user, admin = api.create_key(keys, "tests"), api.create_key(keys, "admin", admin=True)
+    with TestClient(api.create_app(path, path.parent / "keys.db")) as client:
+        yield client, {"Authorization": f"Bearer {user}"}, {"Authorization": f"Bearer {admin}"}, keys
 
 
 def test_keys_are_required(setup):
@@ -33,9 +34,9 @@ def test_keys_are_required(setup):
 
 
 def test_only_the_hash_is_stored(setup):
-    client, user, _, conn = setup
+    client, user, _, keys = setup
     raw_key = user["Authorization"].split()[1]
-    stored = [row[0] for row in conn.execute("SELECT key_hash FROM api_keys")]
+    stored = [row[0] for row in keys.execute("SELECT key_hash FROM api_keys")]
     assert raw_key not in stored and api.hash_key(raw_key) in stored
 
 

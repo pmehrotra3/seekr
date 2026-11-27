@@ -15,6 +15,28 @@ PREVIEW_TAG = re.compile(r"<meta[^>]+(?:property|name)=[\"'](?:og:image|twitter:
 CONTENT = re.compile(r"content=[\"']([^\"']+)", re.I)
 
 
+VIDEO_TAG = re.compile(r"<meta[^>]+property=[\"']og:video(?::secure_url|:url)?[\"'][^>]*>", re.I)
+IFRAME_SRC = re.compile(r"<iframe[^>]+src=[\"']([^\"']+)", re.I)
+YOUTUBE = re.compile(r"(?:youtube(?:-nocookie)?\.com/(?:embed/|watch\?v=)|youtu\.be/)([\w-]{11})")
+VIMEO = re.compile(r"(?:player\.)?vimeo\.com/(?:video/)?(\d{6,})")
+
+
+def page_video(html, url):
+    """The video a page embeds (YouTube, Vimeo or its og:video), as a link people can open, or ''."""
+    declared = [html_lib.unescape(found.group(1)) for tag in VIDEO_TAG.findall(html[:100_000])
+                if (found := CONTENT.search(tag))]
+    for src in declared + IFRAME_SRC.findall(html):
+        if found := YOUTUBE.search(src):
+            return f"https://www.youtube.com/watch?v={found.group(1)}"
+        if found := VIMEO.search(src):
+            return f"https://vimeo.com/{found.group(1)}"
+    for src in declared:  # some other video file or player the page names
+        src = urljoin(url, src.strip())
+        if src.startswith("https://"):
+            return src
+    return ""
+
+
 def page_image(html, url):
     """The preview image a page declares for link sharing (og:image), as an https URL, or ''."""
     for tag in PREVIEW_TAG.findall(html[:100_000]):  # it lives in <head>
@@ -39,6 +61,7 @@ def extract(html, url, page_title=""):
         "language": lang.group(1).lower() if lang else "",
         "text": data["text"].replace("¶", ""),  # Sphinx docs add ¶ after every heading
         "image": page_image(html, url),
+        "video": page_video(html, url),
     }
 
 
@@ -57,7 +80,7 @@ def content_hash(text):
 def save_document(conn, url, doc):
     """Insert one document and its chunks. Returns 'new', 'duplicate' or 'empty'."""
     if doc is None:
-        conn.execute("INSERT INTO documents (url, word_count, image) VALUES (?, 0, '')", (url,))
+        conn.execute("INSERT INTO documents (url, word_count, image, video) VALUES (?, 0, '', '')", (url,))
         return "empty"
     digest = content_hash(doc["text"])
     original = conn.execute(
@@ -65,9 +88,10 @@ def save_document(conn, url, doc):
     ).fetchone()
     cur = conn.execute(
         "INSERT INTO documents (url, title, description, published, language, word_count, content_hash,"
-        " duplicate_of, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " duplicate_of, image, video) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (url, doc["title"], doc["description"], doc["published"], doc["language"],
-         len(doc["text"].split()), digest, original["id"] if original else None, doc["image"]),
+         len(doc["text"].split()), digest, original["id"] if original else None, doc["image"],
+         doc["video"]),
     )
     if original:
         return "duplicate"
@@ -98,15 +122,16 @@ def index_pages(conn, batch_size=1000):
     return counts
 
 
-def add_images(conn, batch_size=2000):
-    """Look up preview images for documents indexed before Seekr extracted them. Returns how many were checked."""
+def add_media(conn, batch_size=2000):
+    """Look up images and videos for documents indexed before Seekr kept them. Returns how many were checked."""
     sql = """SELECT d.id, p.html, p.final_url FROM documents d JOIN pages p ON p.url = d.url
-             WHERE d.image IS NULL LIMIT ?"""
+             WHERE d.image IS NULL OR d.video IS NULL LIMIT ?"""
     total = 0
     while rows := conn.execute(sql, (batch_size,)).fetchall():
-        updates = [(page_image(html or "", final_url or ""), doc_id) for doc_id, html, final_url in rows]
-        conn.executemany("UPDATE documents SET image = ? WHERE id = ?", updates)
+        updates = [(page_image(html or "", url or ""), page_video(html or "", url or ""), doc_id)
+                   for doc_id, html, url in rows]
+        conn.executemany("UPDATE documents SET image = ?, video = ? WHERE id = ?", updates)
         conn.commit()
         total += len(rows)
-        print(f"  checked {total} pages for images...", flush=True)
+        print(f"  checked {total} pages for images and videos...", flush=True)
     return total

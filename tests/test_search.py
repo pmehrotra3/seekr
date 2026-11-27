@@ -118,3 +118,10 @@ def test_one_result_per_site_and_title():
              {"url": "https://billboard.com/b", "title": "Taylor Swift | Billboard"},
              {"url": "https://wikipedia.org/t", "title": "Taylor Swift | Billboard"}]
     assert [page["url"] for page in ranker.one_per_title(pages)] == ["https://billboard.com/a", "https://wikipedia.org/t"]
+
+
+def test_tabs_keep_only_their_kind():
+    page = {"image": "https://a.com/x.jpg", "video": ""}
+    assert ranker.is_kind(page, "www.a.com", "images") and not ranker.is_kind(page, "www.a.com", "videos")
+    assert ranker.is_kind(page, "www.bbc.com", "news") and not ranker.is_kind(page, "www.a.com", "news")
+    assert ranker.is_kind(page, "www.a.com", "all")

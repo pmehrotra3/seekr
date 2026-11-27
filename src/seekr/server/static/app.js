@@ -1,6 +1,7 @@
 // Seekr's page: the landing page, the results view and free API key signup.
 const PAGE_SIZE = 10;
 const MAX_RESULTS = 30; // the reranker scores the best 30 pages per query
+const KINDS = ["all", "images", "videos", "news"];
 
 const $ = (id) => document.getElementById(id);
 const forms = document.querySelectorAll("form.search");
@@ -8,10 +9,16 @@ const inputs = [...forms].map((form) => form.elements.q);
 
 function readUrl() {
   const params = new URLSearchParams(location.search);
-  return { query: (params.get("q") || "").trim(), page: Math.max(1, parseInt(params.get("page"), 10) || 1) };
+  const kind = KINDS.includes(params.get("tab")) ? params.get("tab") : "all";
+  return { query: (params.get("q") || "").trim(), page: Math.max(1, parseInt(params.get("page"), 10) || 1), kind };
 }
 
-async function search(query, page) {
+function link(query, page = 1, kind = "all") {
+  if (!query) return "/";
+  return `/?q=${encodeURIComponent(query)}${kind !== "all" ? `&tab=${kind}` : ""}${page > 1 ? `&page=${page}` : ""}`;
+}
+
+async function search(query, page, kind = "all") {
   inputs.forEach((input) => (input.value = query));
   document.body.classList.toggle("searching", query !== "");
   $("home").hidden = query !== "";
@@ -21,29 +28,42 @@ async function search(query, page) {
   $("about").replaceChildren();
   $("about").hidden = true;
   $("pager").hidden = true;
+  $("results").className = `results ${kind}`;
+  document.querySelectorAll(".tabs a").forEach((tab) => {
+    tab.href = link(query, 1, tab.dataset.kind);
+    tab.classList.toggle("active", tab.dataset.kind === kind);
+  });
   if (!query) return;
   $("status").textContent = "Searching…";
   try {
-    const offset = (page - 1) * PAGE_SIZE;
-    const response = await fetch(`/ui/search?q=${encodeURIComponent(query)}&offset=${offset}`);
+    const offset = kind === "images" ? 0 : (page - 1) * PAGE_SIZE;
+    const response = await fetch(`/ui/search?q=${encodeURIComponent(query)}&offset=${offset}&kind=${kind}`);
     const data = await response.json();
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "That search didn't work.");
-    showResults(data, page);
+    showResults(data, page, kind);
   } catch (error) {
     $("status").textContent = error.message;
   }
 }
 
-function showResults(data, page) {
-  const first = (page - 1) * PAGE_SIZE + 1;
+const NOTHING = {
+  all: "No results. Try different words.",
+  images: "No pictures for this search.",
+  videos: "No videos for this search. Videos come from pages that embed one, so there are only a few thousand.",
+  news: "No news stories for this search.",
+};
+
+function showResults(data, page, kind) {
+  const first = kind === "images" ? 1 : (page - 1) * PAGE_SIZE + 1;
   $("status").textContent = data.results.length
     ? `Results ${first}–${first + data.results.length - 1} · ${(data.took_ms / 1000).toFixed(2)} seconds`
-    : `No results for “${data.query}”. Try different words.`;
-  $("results").append(...data.results.map(resultItem));
+    : NOTHING[kind];
+  const render = { all: resultItem, images: imageItem, videos: videoItem, news: resultItem }[kind];
+  $("results").append(...data.results.map(render));
   if (data.about) showAbout(data.about);
   $("page-label").textContent = `Page ${page}`;
   $("prev").disabled = page === 1;
-  $("next").disabled = data.results.length < PAGE_SIZE || page * PAGE_SIZE >= MAX_RESULTS;
+  $("next").disabled = kind === "images" || data.results.length < PAGE_SIZE || page * PAGE_SIZE >= MAX_RESULTS;
   $("pager").hidden = $("prev").disabled && $("next").disabled;
 }
 
@@ -54,9 +74,21 @@ function element(tag, className, text) {
   return node;
 }
 
+const siteName = (url) => new URL(url).hostname.replace(/^www\./, "");
+const DATE = new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+function picture(src, className, alt = "") {
+  const image = element("img", className);
+  image.src = src; // https only (checked on the server)
+  image.alt = alt;
+  image.loading = "lazy";
+  image.referrerPolicy = "no-referrer"; // don't tell the image's site what was searched
+  return image;
+}
+
 function resultItem(result) {
-  const url = new URL(result.url);
-  const site = element("div", "site", url.hostname.replace(/^www\./, ""));
+  const date = result.published ? ` · ${DATE.format(new Date(result.published))}` : "";
+  const site = element("div", "site", siteName(result.url) + date);
   const title = element("a", "title", result.title);
   title.href = result.url;
   const snippet = element("p", "snippet");
@@ -66,14 +98,39 @@ function resultItem(result) {
   const item = element("li", "result");
   item.append(text);
   if (result.image) {
-    const image = element("img", "thumb");
-    image.src = result.image; // https only (checked on the server)
-    image.alt = "";
-    image.loading = "lazy";
-    image.referrerPolicy = "no-referrer"; // don't tell the image's site what was searched
+    const image = picture(result.image, "thumb");
     image.onerror = () => image.remove();
     item.append(image);
   }
+  return item;
+}
+
+function imageItem(result) {
+  const card = element("a", "image-card");
+  card.href = result.url;
+  const image = picture(result.image, "", result.title);
+  image.onerror = () => card.parentElement?.remove();
+  card.append(image, element("span", "image-title", result.title), element("span", "site", siteName(result.url)));
+  const item = element("li", "");
+  item.append(card);
+  return item;
+}
+
+function videoItem(result) {
+  const youtube = result.video.match(/youtube\.com\/watch\?v=([\w-]{11})/);
+  const poster = youtube ? `https://i.ytimg.com/vi/${youtube[1]}/hqdefault.jpg` : result.image;
+  const player = element("a", "video-thumb");
+  player.href = result.video;
+  if (poster) player.append(picture(poster, ""));
+  player.append(element("span", "play", "▶"));
+  const title = element("a", "title", result.title);
+  title.href = result.video;
+  const page = element("a", "site", `on ${siteName(result.url)}`);
+  page.href = result.url;
+  const text = element("div", "text");
+  text.append(title, page);
+  const item = element("li", "result video");
+  item.append(player, text);
   return item;
 }
 
@@ -81,43 +138,46 @@ function resultItem(result) {
 function showAbout(about) {
   const panel = $("about");
   if (about.image) {
-    const image = element("img", "about-image");
-    image.src = about.image;
-    image.alt = about.title;
-    image.referrerPolicy = "no-referrer";
+    const image = picture(about.image, "about-image", about.title);
     image.onerror = () => image.remove();
     panel.append(image);
   }
   panel.append(element("h2", "about-title", about.title));
   if (about.summary) panel.append(element("p", "about-summary", about.summary));
-  const source = element("a", "about-source", `Read more on ${new URL(about.url).hostname.replace(/^www\./, "")} →`);
+  const source = element("a", "about-source", `Read more on ${siteName(about.url)} →`);
   source.href = about.url;
   panel.append(source);
   panel.hidden = false;
 }
 
-function go(query, page = 1) {
-  const pagePart = page > 1 ? `&page=${page}` : "";
-  history.pushState(null, "", query ? `/?q=${encodeURIComponent(query)}${pagePart}` : "/");
+function go(query, page = 1, kind = "all") {
+  history.pushState(null, "", link(query, page, kind));
   window.scrollTo(0, 0);
-  search(query, page);
+  search(query, page, kind);
 }
 
 forms.forEach((form) =>
   form.addEventListener("submit", (event) => {
     event.preventDefault(); // we fetch the results ourselves instead of reloading the page
-    go(form.elements.q.value.trim());
+    go(form.elements.q.value.trim(), 1, readUrl().kind); // stay on the same tab
   }),
 );
-document.querySelectorAll(".try a").forEach((link) =>
-  link.addEventListener("click", (event) => {
+document.querySelectorAll(".try a").forEach((example) =>
+  example.addEventListener("click", (event) => {
     event.preventDefault();
-    go(new URL(link.href).searchParams.get("q"));
+    go(new URL(example.href).searchParams.get("q"));
   }),
 );
-$("prev").addEventListener("click", () => go(readUrl().query, readUrl().page - 1));
-$("next").addEventListener("click", () => go(readUrl().query, readUrl().page + 1));
-window.addEventListener("popstate", () => search(readUrl().query, readUrl().page)); // Back/Forward buttons
+document.querySelectorAll(".tabs a").forEach((tab) =>
+  tab.addEventListener("click", (event) => {
+    event.preventDefault();
+    go(readUrl().query, 1, tab.dataset.kind);
+  }),
+);
+const here = () => readUrl();
+$("prev").addEventListener("click", () => go(here().query, here().page - 1, here().kind));
+$("next").addEventListener("click", () => go(here().query, here().page + 1, here().kind));
+window.addEventListener("popstate", () => search(here().query, here().page, here().kind)); // Back/Forward buttons
 document.addEventListener("keydown", (event) => {
   const typing = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
   if (event.key === "/" && !typing) {
@@ -175,4 +235,4 @@ document.querySelector(".theme").addEventListener("click", () => {
   } catch (error) {}
 });
 
-search(readUrl().query, readUrl().page);
+search(here().query, here().page, here().kind);

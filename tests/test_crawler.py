@@ -130,3 +130,26 @@ def test_hosts_with_unreachable_robots_are_logged_and_skipped(tmp_path, caplog):
 def test_only_the_page_title_counts_not_icon_titles():
     page = '<title>Yosemite (U.S. National Park Service)</title><svg><title>Lock</title></svg>'
     assert crawler.parse_page(page, "https://nps.gov/")[0] == "Yosemite (U.S. National Park Service)"
+
+
+def test_a_daily_budget_caps_new_pages_across_all_hosts(conn):
+    asyncio.run(crawler.crawl(["https://example.com/"], conn, transport=httpx.MockTransport(fake_site), budget=1))
+    assert conn.execute("SELECT COUNT(*) FROM pages").fetchone()[0] == 1
+
+
+def test_recrawl_refreshes_changed_pages_and_removes_gone_ones(conn):
+    from seekr.index import bm25, embed, extract
+
+    for url in ("https://example.com/a", "https://example.com/gone"):
+        db.save_page(conn, url, url, 200, "Old", "<title>Old</title><p>" + "old words here " * 40 + "</p>", [])
+        conn.execute("UPDATE pages SET fetched_at = '2000-01-01' WHERE url = ?", (url,))
+    extract.index_pages(conn)
+    bm25.build_index(conn)
+    embed.embed_chunks(conn)
+    counts = asyncio.run(crawler.recrawl(conn, 10, transport=httpx.MockTransport(fake_site)))
+    assert counts == {"refreshed": 1, "removed": 1, "skipped": 0}
+    assert [row[0] for row in conn.execute("SELECT url FROM pages")] == ["https://example.com/a"]
+    assert conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0] == 0  # forgotten, so `index` redoes it
+    assert conn.execute("SELECT COUNT(*) FROM chunks_fts").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0] == 0
+    assert conn.execute("SELECT title FROM pages").fetchone()[0] == "Page A"  # the new version

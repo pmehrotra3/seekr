@@ -5,6 +5,7 @@ import logging
 import sqlite3
 import threading
 import time
+from pathlib import Path
 
 from seekr import config, db
 from seekr.crawl import crawler, discover
@@ -34,7 +35,7 @@ def cmd_index(args):
     print("Extracting text from crawled pages:")
     counts = extract.index_pages(conn)
     print(f"new: {counts['new']}  duplicates: {counts['duplicate']}  no main text: {counts['empty']}")
-    print(f"Preview images: checked {extract.add_images(conn)} older pages")
+    print(f"Images and videos: checked {extract.add_media(conn)} older pages")
     print(f"Keyword index: added {bm25.build_index(conn)} chunks")
     print(f"Embedding chunks on {embed.best_device()}:")
     print(f"embedded: {embed.embed_chunks(conn)}")
@@ -116,7 +117,7 @@ def cmd_serve(args):
 
 
 def cmd_keys(args):
-    key = api.create_key(db.connect(), args.name, admin=args.admin)
+    key = api.create_key(api.keys_db(), args.name, admin=args.admin)
     print(f"New {'admin ' if args.admin else ''}API key for {args.name!r} (shown once, store it safely):\n{key}")
 
 
@@ -130,6 +131,21 @@ def cmd_stats(args):
         print_host_stats(conn)
         for table in ("pages", "documents", "chunks", "embeddings"):
             print(f"{table + ':':10} {conn.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0]}")
+
+
+def cmd_daily(args):
+    """One day's work within the limits in config: new pages, refreshed pages, index, rank, export for the server."""
+    conn = db.connect()
+    seeds = config.read_seeds() + discover.found_seeds(conn)
+    print(f"Crawling up to {config.NEW_PAGES_PER_DAY} new pages:")
+    asyncio.run(crawler.crawl(seeds, conn, budget=config.NEW_PAGES_PER_DAY))
+    counts = asyncio.run(crawler.recrawl(conn, config.RECRAWL_PER_DAY))
+    print(f"Fetched the {config.RECRAWL_PER_DAY} oldest pages again: {counts}")
+    cmd_index(args)
+    cmd_rank(args)
+    for suffix in ("", ".ids.npy", ".vectors.npy"):  # the previous run's staging copy
+        Path(f"{args.out}{suffix}").unlink(missing_ok=True)
+    cmd_export(args)
 
 
 def cmd_export(args):
@@ -149,6 +165,7 @@ COMMANDS = {
     "eval": cmd_eval,
     "keys": cmd_keys,
     "export": cmd_export,
+    "daily": cmd_daily,
 }
 
 
@@ -166,7 +183,7 @@ def main(argv=None):
             command.add_argument("--seeds", help="crawl only the sites in this file (default: seeds.txt + discovered)")
         if name == "eval":
             command.add_argument("--split", choices=["dev", "test"], help="only the dev (tuning) or test queries")
-        if name == "export":
+        if name in ("export", "daily"):
             command.add_argument("out", help="new database file for serving (no HTML, no crawl queue)")
         if name == "search":
             command.add_argument("query", nargs="+")

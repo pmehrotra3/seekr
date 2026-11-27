@@ -5,6 +5,7 @@ from pathlib import Path
 PACKAGE = Path(__file__).resolve().parent
 
 DB_PATH = Path(os.environ.get("SEEKR_DB", "data/seekr.db"))
+KEYS_DB = Path(os.environ.get("SEEKR_KEYS_DB", "data/keys.db"))  # API keys, apart from the index that gets replaced
 SEEDS_FILE = Path(os.environ.get("SEEKR_SEEDS", PACKAGE / "crawl" / "seeds.txt"))
 CONTACT = os.environ.get("SEEKR_CONTACT", "")  # e.g. "Your Name; you@example.com". Some sites (Wikipedia) require it
 USER_AGENT = os.environ.get("SEEKR_USER_AGENT", f"SeekrBot/0.1 ({CONTACT})" if CONTACT else "SeekrBot/0.1")
@@ -22,6 +23,8 @@ CRAWL_DELAY = float(os.environ.get("SEEKR_CRAWL_DELAY", "1.0"))  # seconds betwe
 REQUEST_TIMEOUT = float(os.environ.get("SEEKR_REQUEST_TIMEOUT", "15"))
 MAX_PAGE_BYTES = int(os.environ.get("SEEKR_MAX_PAGE_BYTES", "5000000"))  # long Wikipedia articles are over 2 MB
 RETRIES = int(os.environ.get("SEEKR_RETRIES", "2"))
+NEW_PAGES_PER_DAY = int(os.environ.get("SEEKR_NEW_PAGES_PER_DAY", "20000"))  # `daily`: pages never fetched before
+RECRAWL_PER_DAY = int(os.environ.get("SEEKR_RECRAWL_PER_DAY", "5000"))  # `daily`: oldest pages fetched again
 
 # Extraction
 CHUNK_WORDS = int(os.environ.get("SEEKR_CHUNK_WORDS", "300"))
@@ -49,6 +52,13 @@ W_SITE = float(os.environ.get("SEEKR_W_SITE", "0.05"))  # how many other sites l
 W_RETRIEVAL = float(os.environ.get("SEEKR_W_RETRIEVAL", "0.05"))  # tuned on the dev split only
 W_RRF_PAGERANK = float(os.environ.get("SEEKR_W_RRF_PAGERANK", "0.005"))  # RRF scores are ~0.01-0.03
 THIN_PAGE_WORDS, THIN_PAGE_PENALTY = 50, 0.8
+# Tabs. "news" means these sites; fresher stories rank higher there.
+NEWS_SITES = {"bbc.com", "aljazeera.com", "thehindu.com", "indianexpress.com", "timesofindia.indiatimes.com",
+              "hindustantimes.com", "theverge.com", "arstechnica.com", "techcrunch.com", "wired.com", "skysports.com",
+              "espn.com", "billboard.com", "rollingstone.com", "nme.com", "pitchfork.com", "scientificamerican.com"}
+W_NEWS_FRESHNESS = 0.3
+MIN_TAB_RELEVANCE = 0.1  # images, videos and news hide pages the cross-encoder scores below this
+KINDS = ("all", "images", "videos", "news")
 REFRESH_SECONDS = float(os.environ.get("SEEKR_REFRESH_SECONDS", "300"))  # how often search picks up new pages
 
 # REST API

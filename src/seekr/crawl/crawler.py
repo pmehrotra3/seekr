@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import time
+from collections import defaultdict
 from html.parser import HTMLParser
 from urllib.robotparser import RobotFileParser
 
@@ -89,7 +90,20 @@ async def fetch(client, url):
         await asyncio.sleep(2**attempt)
 
 
-async def crawl_host(client, conn, host, scopes, until=None):
+class Budget:
+    """How many more pages this run may fetch, shared by every host (None = no limit)."""
+
+    def __init__(self, pages=None):
+        self.left = pages
+
+    def take(self):
+        if self.left is None:
+            return True
+        self.left -= 1
+        return self.left >= 0
+
+
+async def crawl_host(client, conn, host, scopes, until=None, budget=None):
     """Crawl one host, one request at a time, waiting between requests (and stopping at `until`)."""
     robots = await load_robots(client, host)
     if robots is None:  # can't read the rules, so stay away from this host until the next run
@@ -98,7 +112,7 @@ async def crawl_host(client, conn, host, scopes, until=None):
     delay = max(config.CRAWL_DELAY, robots.crawl_delay(config.USER_AGENT) or 0)
     while db.count_done(conn, host) < config.MAX_PAGES_PER_DOMAIN and (until is None or time.monotonic() < until):
         row = db.next_url(conn, host)
-        if row is None:
+        if row is None or not (budget or Budget()).take():
             break
         url, depth = row["url"], row["depth"]
         if not robots.can_fetch(config.USER_AGENT, url):
@@ -123,7 +137,7 @@ async def crawl_host(client, conn, host, scopes, until=None):
     log.info("%s: done (%d pages)", host, db.count_done(conn, host))
 
 
-async def crawl(seeds, conn, transport=None, until=None):
+async def crawl(seeds, conn, transport=None, until=None, budget=None):
     """Crawl all seed hosts at the same time (each host politely, one request at a time)."""
     seed_urls = [normalize_url(seed) for seed in seeds]
     scopes = build_scopes(seed_urls + db.redirect_targets(conn, seed_urls))
@@ -135,4 +149,44 @@ async def crawl(seeds, conn, transport=None, until=None):
     async with httpx.AsyncClient(
         headers=headers, timeout=config.REQUEST_TIMEOUT, follow_redirects=True, transport=transport
     ) as client:
-        await asyncio.gather(*(crawl_host(client, conn, host, scopes, until) for host in hosts))
+        shared = Budget(budget)
+        await asyncio.gather(*(crawl_host(client, conn, host, scopes, until, shared) for host in hosts))
+
+
+async def recrawl_host(client, conn, host, urls, counts):
+    """Fetch these pages of one host again, politely. Changed pages are re-indexed; gone ones removed."""
+    robots = await load_robots(client, host)
+    if robots is None:
+        return
+    delay = max(config.CRAWL_DELAY, robots.crawl_delay(config.USER_AGENT) or 0)
+    for url in urls:
+        status, final_url, html = None, url, None
+        if robots.can_fetch(config.USER_AGENT, url):
+            status, final_url, html = await fetch(client, url)
+        if status in (404, 410) or not robots.can_fetch(config.USER_AGENT, url):
+            db.forget_page(conn, url)
+            counts["removed"] += 1
+        elif html:
+            title, links = parse_page(html, final_url)
+            db.forget_document(conn, url)  # `index` extracts it again (unchanged text is cheap: it dedupes)
+            db.save_page(conn, url, final_url, status, title, html, links)
+            counts["refreshed"] += 1
+        else:  # a network error or a non-HTML answer: try again in a later round
+            db.touch_page(conn, url)
+            counts["skipped"] += 1
+        conn.commit()
+        await asyncio.sleep(delay)
+
+
+async def recrawl(conn, pages, transport=None):
+    """Fetch again the `pages` pages fetched longest ago. Returns counts: refreshed, removed, skipped."""
+    by_host = defaultdict(list)
+    for (url,) in conn.execute("SELECT url FROM pages ORDER BY fetched_at LIMIT ?", (pages,)).fetchall():
+        by_host[url.split("/")[2]].append(url)
+    counts = {"refreshed": 0, "removed": 0, "skipped": 0}
+    headers = {"User-Agent": config.USER_AGENT}
+    async with httpx.AsyncClient(
+        headers=headers, timeout=config.REQUEST_TIMEOUT, follow_redirects=True, transport=transport
+    ) as client:
+        await asyncio.gather(*(recrawl_host(client, conn, host, urls, counts) for host, urls in by_host.items()))
+    return counts

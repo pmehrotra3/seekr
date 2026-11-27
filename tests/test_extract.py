@@ -61,9 +61,9 @@ def test_older_pages_get_their_images_filled_in(tmp_path):
     page = '<meta property="og:image" content="https://cdn.com/x.jpg">'
     db.save_page(conn, "https://a.com/", "https://a.com/", 200, "A", page, [])
     conn.execute("INSERT INTO documents (url, word_count) VALUES ('https://a.com/', 10)")  # indexed before images
-    assert extract.add_images(conn) == 1
+    assert extract.add_media(conn) == 1
     assert conn.execute("SELECT image FROM documents").fetchone()[0] == "https://cdn.com/x.jpg"
-    assert extract.add_images(conn) == 0
+    assert extract.add_media(conn) == 0
 
 
 def test_databases_from_before_images_are_upgraded(tmp_path):
@@ -76,3 +76,13 @@ def test_databases_from_before_images_are_upgraded(tmp_path):
     old.close()
     columns = [row[1] for row in db.connect(tmp_path / "old.db").execute("PRAGMA table_info(documents)")]
     assert "image" in columns
+
+
+def test_page_video_finds_embedded_players():
+    embed = '<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0"></iframe>'
+    assert extract.page_video(embed, "") == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    assert extract.page_video('<iframe src="https://player.vimeo.com/video/76979871"></iframe>', "") == \
+        "https://vimeo.com/76979871"
+    declared = '<meta property="og:video:secure_url" content="/media/talk.mp4">'
+    assert extract.page_video(declared, "https://dev.example.com/talks/1") == "https://dev.example.com/media/talk.mp4"
+    assert extract.page_video('<a href="https://youtube.com/@nasa">YouTube</a>', "") == ""  # a social link

@@ -5,7 +5,8 @@ FTS_SCHEMA = """
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
     title, text,
     tokenize = 'porter unicode61',  -- lowercase, strip accents, and stem: "indexes" matches "index"
-    content = ''  -- contentless: keep only the index, not a second copy of all text (saves ~5 GB at 2M chunks)
+    content = '',  -- contentless: keep only the index, not a second copy of all text (saves ~5 GB at 2M chunks)
+    contentless_delete = 1  -- but still allow deleting rows, for recrawled pages
 );
 """
 # Words in almost every chunk: matching them costs seconds on a big index and says nothing about relevance

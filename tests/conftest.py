@@ -7,3 +7,4 @@ from seekr import config
 def private_database(tmp_path, monkeypatch):
     """Every test gets its own empty database, so no test can touch the real one in data/."""
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "seekr.db")
+    monkeypatch.setattr(config, "KEYS_DB", tmp_path / "keys.db")

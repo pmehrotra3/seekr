@@ -10,7 +10,7 @@ served through a web page and a REST API. It runs on one machine, with or withou
 1. **Crawl** pages from a list of sites, obeying `robots.txt`.
 2. **Index** their text: keyword index (BM25), embeddings, and PageRank over the links.
 3. **Search**: take the best keyword and embedding matches, fuse them, and let a cross-encoder rerank the top 30.
-4. **Serve** results through a website and a REST API.
+4. **Serve** results through a website (All, Images, Videos and News tabs) and a REST API.
 
 ```
 src/seekr/
@@ -21,6 +21,7 @@ src/seekr/
 ├── __main__.py   the `seekr` command
 ├── config.py     settings
 └── db.py         SQLite storage
+deploy/daily.sh   nightly crawl + index refresh
 tests/
 ```
 
@@ -41,7 +42,7 @@ seekr rank      # PageRank
 seekr serve     # http://127.0.0.1:8000, API docs at /docs
 ```
 
-Other commands: `search`, `eval`, `stats`, `keys`, `export`, `discover` and `live` (crawl and index continuously).
+Other commands: `search`, `eval`, `stats`, `keys`, `export`, `daily` (one day of crawling within limits), `discover` and `live`.
 Settings are in [config.py](src/seekr/config.py); override any with an environment variable, such as `SEEKR_DEVICE=cpu`.
 
 ## API
@@ -53,7 +54,8 @@ Live at **[seekr.pranavmehrotra.com](https://seekr.pranavmehrotra.com)**: get a 
 curl -H "Authorization: Bearer $KEY" "https://seekr.pranavmehrotra.com/api/v1/search?q=black+holes&limit=3"
 ```
 
-Results include title, link, snippet, preview image and ranking signals. Also `/api/v1/page` and `/api/v1/stats`;
+Results include title, link, snippet, preview image, video, date and ranking signals. Add `kind=images`, `videos`
+or `news` for one type of result. Also `/api/v1/page` and `/api/v1/stats`;
 reference at [/docs](https://seekr.pranavmehrotra.com/docs). Each key may make 60 requests per minute. On your own
 instance, `seekr keys create NAME` makes a key from the command line.
 
@@ -69,6 +71,18 @@ To move to a server, copy `data/serve.db*` into its `data/` folder and put an HT
 listens on localhost and believes `X-Forwarded-For` only from local hops (`SEEKR_TRUSTED_PROXIES`), so visitors cannot fake their IP to dodge rate limits.
 
 On a 16-core Intel laptop, CPU only, the 379K-page index takes 13 GB of disk and about 4 GB of RAM.
+API keys live in `data/keys.db`, apart from the index, so replacing the index keeps them.
+
+### Daily refresh
+
+`seekr daily data/serve-next.db` crawls up to `SEEKR_NEW_PAGES_PER_DAY` new pages (default 20,000), fetches the
+`SEEKR_RECRAWL_PER_DAY` least recently fetched pages again (default 5,000; changed pages are re-indexed, gone ones
+removed), re-indexes, ranks and exports. [deploy/daily.sh](deploy/daily.sh) runs that and swaps the new index in
+(about 10 seconds of downtime). Schedule it with cron:
+
+```bash
+17 3 * * *  /path/to/seekr/deploy/daily.sh > /path/to/seekr/data/daily.log 2>&1
+```
 
 ## Results
 

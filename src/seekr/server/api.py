@@ -2,10 +2,13 @@
 import hashlib
 import logging
 import secrets
+import sqlite3
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,9 +29,18 @@ def hash_key(key):
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+def keys_db(path=None):
+    """The API key database. It is separate from the search index, so replacing the index keeps everyone's keys."""
+    path = Path(path or config.KEYS_DB)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path, timeout=60)
+    conn.row_factory = sqlite3.Row
+    conn.executescript(KEYS_SCHEMA)
+    return conn
+
+
 def create_key(conn, name, admin=False):
     """Make a new random key and store only its hash. The key itself is shown once, then forgotten."""
-    conn.executescript(KEYS_SCHEMA)
     key = "sk_" + secrets.token_urlsafe(24)
     created_at = datetime.now(UTC).isoformat(timespec="seconds")
     conn.execute("INSERT INTO api_keys VALUES (?, ?, ?, ?)", (hash_key(key), name, int(admin), created_at))
@@ -67,6 +79,8 @@ class Result(BaseModel):
     title: str
     snippet: str  # HTML: page text is escaped, query words are wrapped in <mark>
     image: str | None = None  # the page's preview image (https), if it has one
+    video: str | None = None  # a video the page embeds (YouTube, Vimeo, ...), if any
+    published: str | None = None  # YYYY-MM-DD, when the page says
     relevance: float | None
     final_score: float | None
     signals: Signals
@@ -112,7 +126,7 @@ async def api_key(request: Request, credentials: HTTPAuthorizationCredentials | 
     if credentials is None:
         raise HTTPException(401, "Missing API key. Send the header: Authorization: Bearer <key>")
     key_hash = hash_key(credentials.credentials)
-    row = request.app.state.conn.execute(
+    row = request.app.state.keys.execute(
         "SELECT name, is_admin FROM api_keys WHERE key_hash = ?", (key_hash,)
     ).fetchone()
     if row is None:
@@ -135,12 +149,13 @@ async def search_pages(
     limit: int = Query(10, ge=1, le=30),
     offset: int = Query(0, ge=0, le=29),
     site: str | None = Query(None, description="Only results from this host, e.g. docs.python.org"),
+    kind: Literal["all", "images", "videos", "news"] = Query("all", description="Which tab: all, images, videos, news"),
     key=Depends(api_key),
 ):
     started = time.perf_counter()
     engine = request.app.state.engine
-    results = engine.search(q, limit=limit, offset=offset, site=site)
-    about = engine.about(q, results) if offset == 0 else None
+    results = engine.search(q, limit=limit, offset=offset, site=site, kind=kind)
+    about = engine.about(q, results) if offset == 0 and kind == "all" else None
     took_ms = round((time.perf_counter() - started) * 1000)
     log.info("search %r offset=%d site=%s -> %d results in %d ms", q, offset, site, len(results), took_ms)
     return {"query": q, "took_ms": took_ms, "results": results, "about": about}
@@ -184,16 +199,17 @@ async def add_seeds(body: Seeds, key=Depends(admin_key)):
     return {"added": added, "next": "seekr crawl && seekr index && seekr rank"}
 
 
-def create_app(db_path=None):
+def create_app(db_path=None, keys_path=None):
     @asynccontextmanager
     async def lifespan(app):
         app.state.conn = db.connect(db_path)
-        app.state.conn.executescript(KEYS_SCHEMA)
+        app.state.keys = keys_db(keys_path)
         app.state.engine = ranker.SearchEngine(app.state.conn)  # loads vectors + models once, at startup
         app.state.engine.search("warm up")  # the GPU compiles its kernels on first use; do it before users arrive
         app.state.limiter = RateLimiter(config.RATE_LIMIT_PER_MINUTE)
         yield
         app.state.conn.close()
+        app.state.keys.close()
 
     app = FastAPI(title="Seekr API", version="0.1", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["GET", "POST"],

@@ -67,3 +67,18 @@ def test_asset_urls_change_when_their_content_does(client):
 
     versions = re.findall(r'(?:app\.js|style\.css)\?v=([0-9a-f]{10})"', client.get("/").text)
     assert len(versions) == 2 and versions[0] == versions[1]
+
+
+def test_tabs_and_their_validation(client):
+    client.app.state.ui_limiter = api.RateLimiter(limit=100)  # other tests used up the per-minute budget
+    for kind in ("all", "images", "videos", "news"):
+        assert client.get(f"/ui/search?q=pasta&kind={kind}").status_code == 200
+    assert client.get("/ui/search?q=pasta&kind=podcasts").status_code == 422
+
+
+def test_keys_live_apart_from_the_index(tmp_path):
+    keys = api.keys_db(tmp_path / "keys.db")
+    key = api.create_key(keys, "survives index swaps")
+    index = db.connect(tmp_path / "serve.db")
+    assert "api_keys" not in {row[0] for row in index.execute("SELECT name FROM sqlite_master")}
+    assert api.keys_db(tmp_path / "keys.db").execute("SELECT COUNT(*) FROM api_keys").fetchone()[0] == 1 and key

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS pages (
     outlinks   TEXT,  -- JSON list of absolute URLs
     fetched_at TEXT
 );
+CREATE INDEX IF NOT EXISTS pages_fetched ON pages (fetched_at);  -- the oldest pages are recrawled first
 
 -- One row per crawled page. Duplicates and pages without main text get no chunks.
 CREATE TABLE IF NOT EXISTS documents (
@@ -36,7 +37,8 @@ CREATE TABLE IF NOT EXISTS documents (
     word_count   INTEGER,
     content_hash TEXT,
     duplicate_of INTEGER,
-    image        TEXT  -- preview image (https URL), '' if none, NULL if not looked for yet
+    image        TEXT, -- preview image (https URL), '' if none, NULL if not looked for yet
+    video        TEXT  -- embedded video (YouTube/Vimeo/og:video URL), '' if none, NULL if not looked for yet
 );
 CREATE INDEX IF NOT EXISTS documents_hash ON documents (content_hash);
 
@@ -74,8 +76,10 @@ def connect(path=None):
     conn.execute("PRAGMA journal_mode=WAL")  # lets crawl, index and serve use the database at the same time
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
-    if "image" not in {row[1] for row in conn.execute("PRAGMA table_info(documents)")}:  # made before images
-        conn.execute("ALTER TABLE documents ADD COLUMN image TEXT")
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(documents)")}
+    for column in ("image", "video"):  # databases made before Seekr kept images and videos
+        if column not in columns:
+            conn.execute(f"ALTER TABLE documents ADD COLUMN {column} TEXT")
     return conn
 
 
@@ -129,3 +133,28 @@ def host_stats(conn):
                   SUM(status = 'blocked') AS blocked
            FROM frontier GROUP BY host ORDER BY host"""
     ).fetchall()
+
+
+def forget_document(conn, url):
+    """Drop a page's document (and copies of it) with its chunks, keyword index and vectors; `index` redoes it."""
+    sql = "SELECT id FROM documents WHERE url = ? OR duplicate_of IN (SELECT id FROM documents WHERE url = ?)"
+    ids = [row[0] for row in conn.execute(sql, (url, url))]
+    for doc_id in ids:
+        chunk_ids = [(row[0],) for row in conn.execute("SELECT id FROM chunks WHERE doc_id = ?", (doc_id,))]
+        conn.executemany("DELETE FROM embeddings WHERE chunk_id = ?", chunk_ids)
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'chunks_fts'").fetchone():
+            conn.executemany("DELETE FROM chunks_fts WHERE rowid = ?", chunk_ids)
+        conn.execute("DELETE FROM chunks WHERE doc_id = ?", (doc_id,))
+        conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+
+
+def forget_page(conn, url):
+    """A page that is gone (404) or now off-limits: remove it from the index for good."""
+    forget_document(conn, url)
+    conn.execute("DELETE FROM pages WHERE url = ?", (url,))
+    mark(conn, url, "failed")
+
+
+def touch_page(conn, url):
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    conn.execute("UPDATE pages SET fetched_at = ? WHERE url = ?", (now, url))
