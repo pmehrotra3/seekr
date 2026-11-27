@@ -42,7 +42,8 @@ seekr rank      # PageRank
 seekr serve     # http://127.0.0.1:8000, API docs at /docs
 ```
 
-Other commands: `search`, `eval`, `stats`, `keys`, `export`, `daily` (one day of crawling within limits), `discover` and `live`.
+Other commands: `search`, `eval`, `stats`, `keys`, `export`, `daily` (one day of crawling within limits), `discover`,
+`live`, `archive`, `wikipedia` and `dailymotion` (below).
 Settings are in [config.py](src/seekr/config.py); override any with an environment variable, such as `SEEKR_DEVICE=cpu`.
 
 ## API
@@ -83,6 +84,22 @@ removed), re-indexes, ranks and exports. [deploy/daily.sh](deploy/daily.sh) runs
 ```bash
 17 3 * * *  /path/to/seekr/deploy/daily.sh > /path/to/seekr/data/daily.log 2>&1
 ```
+
+It also adds each Dailymotion channel's trending and newest videos. Set `SEEKR_ARCHIVE_DB` (in `.env`) to a file on
+a big, slow disk and it moves the HTML of indexed pages there: over 90% of the crawl database, never read again.
+`seekr archive FILE --vacuum` does that once by hand and shrinks the crawl database file.
+
+To crawl nonstop instead, run `seekr crawl --forever` as the service in
+[deploy/seekr-crawler.service](deploy/seekr-crawler.service) (pinned to four efficiency cores; pauses below
+`SEEKR_MIN_FREE_GB` of free disk, finds new sites every 6 hours). While it runs, `daily` only indexes and refreshes.
+
+### Sources besides crawling
+
+- **Wikipedia:** `seekr wikipedia enwiki-latest-pages-articles.xml.bz2` reads the official
+  [dump](https://dumps.wikimedia.org/enwiki/latest/) (26 GB): every article's opening, infobox facts and picture,
+  one chunk per article. Then `seekr index`.
+- **Dailymotion:** `seekr dailymotion` adds videos from verified publishers via the public API (no key):
+  13 channels plus the searches in [video_topics.txt](src/seekr/crawl/video_topics.txt).
 
 ## Results
 

@@ -105,3 +105,29 @@ https://en.wikipedia.org/wiki/Main_Page
 https://en.wikipedia.org/wiki/Adele
 https://en.wikivoyage.org/wiki/Main_Page
 https://en.wiktionary.org/wiki/Wiktionary:Main_Page
+# News: world, India, business, tech, sport (robots.txt and a test fetch checked 2026-11-27)
+https://abcnews.go.com/
+https://www.cbsnews.com/
+https://www.dw.com/en/
+https://www.euronews.com/
+https://www.independent.co.uk/
+https://www.indiatoday.in/
+https://www.livemint.com/
+https://economictimes.indiatimes.com/
+https://theprint.in/
+https://scroll.in/
+https://www.deccanherald.com/
+# Movies and TV: Hollywood, Bollywood, South Indian cinema (robots.txt and a test fetch checked 2026-11-27)
+https://variety.com/
+https://www.hollywoodreporter.com/
+https://deadline.com/
+https://www.empireonline.com/
+https://www.slashfilm.com/
+https://screenrant.com/
+https://collider.com/
+https://www.metacritic.com/movie/
+https://www.bollywoodhungama.com/
+https://www.filmfare.com/
+https://www.pinkvilla.com/
+https://www.cinemaexpress.com/
+https://www.123telugu.com/

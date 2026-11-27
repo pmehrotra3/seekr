@@ -2,14 +2,15 @@
 import argparse
 import asyncio
 import logging
+import shutil
 import sqlite3
 import threading
 import time
 from pathlib import Path
 
 from seekr import config, db
-from seekr.crawl import crawler, discover
-from seekr.index import bm25, embed, export, extract, pagerank
+from seekr.crawl import crawler, dailymotion, discover
+from seekr.index import bm25, embed, export, extract, pagerank, wikipedia
 from seekr.search import evaluate, ranker
 from seekr.server import api, web
 
@@ -23,7 +24,10 @@ def print_host_stats(conn):
 
 
 def cmd_crawl(args):
-    """Crawl seeds.txt plus discovered sites, or only the sites in --seeds FILE."""
+    """Crawl seeds.txt plus discovered sites, or only the sites in --seeds FILE. --forever: never stop."""
+    if args.forever:
+        crawl_forever(discover_every=config.DISCOVER_EVERY)
+        return
     conn = db.connect()
     seeds = config.read_seeds(args.seeds) if args.seeds else config.read_seeds() + discover.found_seeds(conn)
     asyncio.run(crawler.crawl(seeds, conn))
@@ -59,15 +63,27 @@ def cmd_discover(args):
         print(f"  new site to crawl: {seed}")
 
 
-def crawl_forever():
-    """Crawl in rounds of CRAWL_ROUND seconds, so each round also crawls the sites discovered meanwhile."""
+def crawl_forever(discover_every=None):
+    """Crawl in rounds of CRAWL_ROUND seconds, so each round also crawls the sites discovered meanwhile.
+
+    Pauses while the disk has less than MIN_FREE_GB free. With discover_every (seconds), it also looks for new sites.
+    """
+    last_discover = time.monotonic()
     while True:
         try:
+            if shutil.disk_usage(config.DB_PATH.resolve().parent).free < config.MIN_FREE_GB * 1e9:
+                log.warning("less than %d GB of disk free: crawling paused", config.MIN_FREE_GB)
+                time.sleep(config.LIVE_INTERVAL)
+                continue
             conn = db.connect()
             before = conn.execute("SELECT MAX(rowid) FROM pages").fetchone()[0]  # COUNT(*) would read every page
             seeds = config.read_seeds() + discover.found_seeds(conn)
             asyncio.run(crawler.crawl(seeds, conn, until=time.monotonic() + config.CRAWL_ROUND))
-            if conn.execute("SELECT MAX(rowid) FROM pages").fetchone()[0] == before:
+            log.info("crawl round done: %d pages so far", conn.execute("SELECT MAX(rowid) FROM pages").fetchone()[0])
+            if discover_every and time.monotonic() - last_discover >= discover_every:
+                cmd_discover(None)
+                last_discover = time.monotonic()
+            elif conn.execute("SELECT MAX(rowid) FROM pages").fetchone()[0] == before:
                 time.sleep(config.LIVE_INTERVAL)  # nothing new to fetch: wait for discover to find more sites
         except sqlite3.OperationalError as error:  # "database is locked": the indexer wrote for too long
             log.warning("crawl round stopped (%s); starting a new one", error)
@@ -141,11 +157,35 @@ def cmd_daily(args):
     asyncio.run(crawler.crawl(seeds, conn, budget=config.NEW_PAGES_PER_DAY))
     counts = asyncio.run(crawler.recrawl(conn, config.RECRAWL_PER_DAY))
     print(f"Fetched the {config.RECRAWL_PER_DAY} oldest pages again: {counts}")
+    print(f"New videos: {dailymotion.import_videos(conn, pages=2)}")  # each channel's trending and newest
     cmd_index(args)
+    if config.ARCHIVE_DB and Path(config.ARCHIVE_DB).parent.is_dir():  # skipped while the archive disk is unplugged
+        print(f"Archived the HTML of {db.archive_pages(conn, config.ARCHIVE_DB)} indexed pages to {config.ARCHIVE_DB}")
     cmd_rank(args)
     for suffix in ("", ".ids.npy", ".vectors.npy"):  # the previous run's staging copy
         Path(f"{args.out}{suffix}").unlink(missing_ok=True)
     cmd_export(args)
+
+
+def cmd_dailymotion(args):
+    print("Videos from Dailymotion's verified publishers:")
+    topics = dailymotion.read_topics(args.topics) if args.topics else dailymotion.read_topics()
+    print(dailymotion.import_videos(db.connect(), topics, pages=args.pages))
+
+
+def cmd_wikipedia(args):
+    print(f"Articles from {args.dump}:")
+    print(wikipedia.import_dump(db.connect(), args.dump, limit=args.limit))
+    print("Next: seekr index (keyword index and vectors), then seekr rank and seekr export.")
+
+
+def cmd_archive(args):
+    print(f"Moving the HTML of indexed pages to {args.dest}:")
+    conn = db.connect()
+    print(f"moved: {db.archive_pages(conn, args.dest)}")
+    if args.vacuum:
+        print("Giving the freed space back to the disk (VACUUM)...", flush=True)
+        conn.execute("VACUUM")
 
 
 def cmd_export(args):
@@ -165,6 +205,9 @@ COMMANDS = {
     "eval": cmd_eval,
     "keys": cmd_keys,
     "export": cmd_export,
+    "archive": cmd_archive,
+    "dailymotion": cmd_dailymotion,
+    "wikipedia": cmd_wikipedia,
     "daily": cmd_daily,
 }
 
@@ -181,10 +224,20 @@ def main(argv=None):
         command = sub.add_parser(name)
         if name == "crawl":
             command.add_argument("--seeds", help="crawl only the sites in this file (default: seeds.txt + discovered)")
+            command.add_argument("--forever", action="store_true", help="crawl nonstop and keep finding new sites")
         if name == "eval":
             command.add_argument("--split", choices=["dev", "test"], help="only the dev (tuning) or test queries")
         if name in ("export", "daily"):
             command.add_argument("out", help="new database file for serving (no HTML, no crawl queue)")
+        if name == "dailymotion":
+            command.add_argument("--topics", help="file of searches, one per line (default: video_topics.txt)")
+            command.add_argument("--pages", type=int, default=10, help="pages of 100 videos per list (most 10)")
+        if name == "wikipedia":
+            command.add_argument("dump", help="enwiki-latest-pages-articles.xml.bz2 from dumps.wikimedia.org")
+            command.add_argument("--limit", type=int, help="stop after this many articles (for a quick try)")
+        if name == "archive":
+            command.add_argument("dest", help="archive database for the HTML, e.g. on an external disk")
+            command.add_argument("--vacuum", action="store_true", help="then shrink the crawl database file")
         if name == "search":
             command.add_argument("query", nargs="+")
         if name == "keys":

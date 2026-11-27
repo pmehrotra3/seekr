@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 import trafilatura
 
-from seekr import config
+from seekr import config, db
 
 HTML_LANG = re.compile(r"<html[^>]*\blang=[\"']?([a-zA-Z-]+)", re.IGNORECASE)
 PREVIEW_TAG = re.compile(r"<meta[^>]+(?:property|name)=[\"'](?:og:image|twitter:image)(?::src)?[\"'][^>]*>", re.I)
@@ -102,7 +102,7 @@ def save_document(conn, url, doc):
 
 def extract_row(row):
     try:
-        return extract(row[1], row[2], row[3])
+        return extract(db.unpack_html(row[1]), row[2], row[3])
     except Exception:  # e.g. trafilatura writing broken JSON for one odd page: skip that page, keep going
         return None
 
@@ -128,8 +128,8 @@ def add_media(conn, batch_size=2000):
              WHERE d.image IS NULL OR d.video IS NULL LIMIT ?"""
     total = 0
     while rows := conn.execute(sql, (batch_size,)).fetchall():
-        updates = [(page_image(html or "", url or ""), page_video(html or "", url or ""), doc_id)
-                   for doc_id, html, url in rows]
+        pages = [(doc_id, db.unpack_html(html), url or "") for doc_id, html, url in rows]
+        updates = [(page_image(html, url), page_video(html, url), doc_id) for doc_id, html, url in pages]
         conn.executemany("UPDATE documents SET image = ?, video = ? WHERE id = ?", updates)
         conn.commit()
         total += len(rows)

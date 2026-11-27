@@ -1,0 +1,58 @@
+# `seekr dailymotion --topics`: one search per line, best matches from verified publishers.
+# Indian cinema
+Bollywood
+Shah Rukh Khan
+Salman Khan
+Aamir Khan
+Amitabh Bachchan
+Deepika Padukone
+Priyanka Chopra
+Alia Bhatt
+Ranveer Singh
+Ranbir Kapoor
+Katrina Kaif
+Hrithik Roshan
+Akshay Kumar
+Kareena Kapoor
+Anushka Sharma
+Prabhas
+Allu Arjun
+Rajinikanth
+Vijay
+Mahesh Babu
+Tollywood
+Kollywood
+movie trailer
+film review
+box office
+Oscars
+# Music
+music video
+live concert
+Taylor Swift
+Arijit Singh
+K-pop
+# News and the world
+world news
+India news
+election
+climate change
+economy
+interview
+documentary
+# Sport
+cricket
+IPL
+football highlights
+Formula 1
+tennis
+NBA
+# Science, tech, how-to
+science
+space
+technology review
+artificial intelligence
+cooking recipe
+travel guide
+history
+health

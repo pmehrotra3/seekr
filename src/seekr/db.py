@@ -1,6 +1,8 @@
 """SQLite storage: one file on disk, a few small tables."""
 import json
 import sqlite3
+import zlib
+from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -115,11 +117,21 @@ def count_done(conn, host):
     return conn.execute(sql, (host,)).fetchone()[0]
 
 
+def pack_html(html):
+    """Pages are stored compressed (about 6x smaller): raw HTML would fill the disk in days of crawling."""
+    return zlib.compress(html.encode(), 6) if html else html
+
+
+def unpack_html(value):
+    """The HTML of a page row; older databases stored it uncompressed."""
+    return zlib.decompress(value).decode() if isinstance(value, bytes) else value or ""
+
+
 def save_page(conn, url, final_url, status, title, html, outlinks):
     fetched_at = datetime.now(UTC).isoformat(timespec="seconds")
     conn.execute(
         "INSERT OR REPLACE INTO pages VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (url, final_url, status, title, html, json.dumps(outlinks), fetched_at),
+        (url, final_url, status, title, pack_html(html), json.dumps(outlinks), fetched_at),
     )
 
 
@@ -158,3 +170,39 @@ def forget_page(conn, url):
 def touch_page(conn, url):
     now = datetime.now(UTC).isoformat(timespec="seconds")
     conn.execute("UPDATE pages SET fetched_at = ? WHERE url = ?", (now, url))
+
+
+ARCHIVE_SCHEMA = """CREATE TABLE IF NOT EXISTS pages (
+    url TEXT PRIMARY KEY, final_url TEXT, status INTEGER, title TEXT, html BLOB, fetched_at TEXT
+);"""
+
+
+def _packed(html):
+    return html if isinstance(html, bytes) else pack_html(html)
+
+
+def archive_pages(conn, dest, batch_size=2000):
+    """Move the HTML of pages that are already indexed into the archive database `dest` (e.g. on a big, slow disk).
+
+    HTML is over 90% of the crawl database, but once a page is indexed nothing reads it again. The page row stays,
+    with its URL, links and fetch time: crawling, recrawling, PageRank and discovery need those. Returns pages moved.
+    """
+    archive = sqlite3.connect(dest, timeout=60)
+    archive.execute("PRAGMA journal_mode=WAL")
+    archive.executescript(ARCHIVE_SCHEMA)
+    sql = """SELECT p.rowid, p.url, p.final_url, p.status, p.title, p.html, p.fetched_at FROM pages p
+             JOIN documents d ON d.url = p.url WHERE p.rowid > ? AND p.html IS NOT NULL ORDER BY p.rowid LIMIT ?"""
+    moved, last = 0, 0
+    with ProcessPoolExecutor() as pool:  # compressing pages saved before Seekr compressed them is the slow part
+        while rows := conn.execute(sql, (last, batch_size)).fetchall():
+            last = rows[-1][0]
+            htmls = pool.map(_packed, [row[5] for row in rows], chunksize=50)
+            archive.executemany("INSERT OR REPLACE INTO pages VALUES (?, ?, ?, ?, ?, ?)",
+                                [(*row[1:5], html, row[6]) for row, html in zip(rows, htmls, strict=True)])
+            archive.commit()  # safely in the archive before it leaves the crawl database
+            conn.executemany("UPDATE pages SET html = NULL WHERE rowid = ?", [(row[0],) for row in rows])
+            conn.commit()
+            moved += len(rows)
+            print(f"  moved {moved} pages...", flush=True)
+    archive.close()
+    return moved

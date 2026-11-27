@@ -4,10 +4,15 @@
 # Run it from cron, e.g.:  17 3 * * *  /path/to/seekr/deploy/daily.sh > /path/to/seekr/data/daily.log 2>&1
 set -eu
 cd "$(dirname "$0")/.."
+if [ -f .env ]; then set -a; . ./.env; set +a; fi  # local settings, e.g. SEEKR_ARCHIVE_DB on an external disk
 # cron starts with almost no environment: find docker and talk to the daemon that runs the site
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 export DOCKER_HOST="${DOCKER_HOST:-unix:///var/run/docker.sock}"
 export SEEKR_MAX_PAGES_PER_DOMAIN="${SEEKR_MAX_PAGES_PER_DOMAIN:-20000}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"  # lets cron ask about user services
+if systemctl --user is-active --quiet seekr-crawler 2>/dev/null; then
+  export SEEKR_NEW_PAGES_PER_DAY=0  # the crawler service fetches new pages all day; this run indexes them
+fi
 
 # Only one refresh at a time: a second copy started meanwhile exits instead of clashing.
 exec 9>data/daily.lock

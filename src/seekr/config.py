@@ -19,16 +19,24 @@ LIVE_INTERVAL = float(os.environ.get("SEEKR_LIVE_INTERVAL", "600"))  # seconds b
 CRAWL_ROUND = float(os.environ.get("SEEKR_CRAWL_ROUND", "1800"))  # `live` restarts the crawl this often, with new sites
 DISCOVER_MIN_LINKS = int(os.environ.get("SEEKR_DISCOVER_MIN_LINKS", "3"))  # other sites that must link to a new one
 DISCOVER_PER_ROUND = int(os.environ.get("SEEKR_DISCOVER_PER_ROUND", "20"))  # sites checked per `discover`
+DISCOVER_EVERY = float(os.environ.get("SEEKR_DISCOVER_EVERY", "21600"))  # `crawl --forever` looks for new sites
+MIN_FREE_GB = float(os.environ.get("SEEKR_MIN_FREE_GB", "100"))  # crawling pauses below this much free disk
 CRAWL_DELAY = float(os.environ.get("SEEKR_CRAWL_DELAY", "1.0"))  # seconds between requests to one host
 REQUEST_TIMEOUT = float(os.environ.get("SEEKR_REQUEST_TIMEOUT", "15"))
 MAX_PAGE_BYTES = int(os.environ.get("SEEKR_MAX_PAGE_BYTES", "5000000"))  # long Wikipedia articles are over 2 MB
 RETRIES = int(os.environ.get("SEEKR_RETRIES", "2"))
 NEW_PAGES_PER_DAY = int(os.environ.get("SEEKR_NEW_PAGES_PER_DAY", "20000"))  # `daily`: pages never fetched before
 RECRAWL_PER_DAY = int(os.environ.get("SEEKR_RECRAWL_PER_DAY", "5000"))  # `daily`: oldest pages fetched again
+# `daily` moves the HTML of indexed pages here (a big, slow disk is fine). Empty: keep it in the crawl database.
+ARCHIVE_DB = os.environ.get("SEEKR_ARCHIVE_DB", "")
 
 # Extraction
 CHUNK_WORDS = int(os.environ.get("SEEKR_CHUNK_WORDS", "300"))
 CHUNK_OVERLAP = int(os.environ.get("SEEKR_CHUNK_OVERLAP", "50"))
+
+# Wikipedia dump: words kept per article, and the fewest worth indexing
+WIKI_WORDS = int(os.environ.get("SEEKR_WIKI_WORDS", "300"))  # = CHUNK_WORDS: one vector per article
+WIKI_MIN_WORDS = int(os.environ.get("SEEKR_WIKI_MIN_WORDS", "40"))
 
 # Embeddings (runs on the GPU when there is one)
 EMBED_MODEL = os.environ.get("SEEKR_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
@@ -55,7 +63,11 @@ THIN_PAGE_WORDS, THIN_PAGE_PENALTY = 50, 0.8
 # Tabs. "news" means these sites; fresher stories rank higher there.
 NEWS_SITES = {"bbc.com", "aljazeera.com", "thehindu.com", "indianexpress.com", "timesofindia.indiatimes.com",
               "hindustantimes.com", "theverge.com", "arstechnica.com", "techcrunch.com", "wired.com", "skysports.com",
-              "espn.com", "billboard.com", "rollingstone.com", "nme.com", "pitchfork.com", "scientificamerican.com"}
+              "espn.com", "billboard.com", "rollingstone.com", "nme.com", "pitchfork.com", "scientificamerican.com",
+              "abcnews.go.com", "cbsnews.com", "dw.com", "euronews.com", "independent.co.uk", "indiatoday.in",
+              "livemint.com", "economictimes.indiatimes.com", "theprint.in", "scroll.in", "deccanherald.com",
+              "variety.com", "hollywoodreporter.com", "deadline.com", "bollywoodhungama.com", "filmfare.com",
+              "pinkvilla.com", "cinemaexpress.com"}
 W_NEWS_FRESHNESS = 0.3
 MIN_TAB_RELEVANCE = 0.1  # images, videos and news hide pages the cross-encoder scores below this
 KINDS = ("all", "images", "videos", "news")
