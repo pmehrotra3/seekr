@@ -18,6 +18,8 @@ async function search(query, page) {
   $("results-view").hidden = query === "";
   document.title = query ? `${query} - Seekr` : "Seekr: search without the noise";
   $("results").replaceChildren();
+  $("about").replaceChildren();
+  $("about").hidden = true;
   $("pager").hidden = true;
   if (!query) return;
   $("status").textContent = "Searching…";
@@ -38,6 +40,7 @@ function showResults(data, page) {
     ? `Results ${first}–${first + data.results.length - 1} · ${(data.took_ms / 1000).toFixed(2)} seconds`
     : `No results for “${data.query}”. Try different words.`;
   $("results").append(...data.results.map(resultItem));
+  if (data.about) showAbout(data.about);
   $("page-label").textContent = `Page ${page}`;
   $("prev").disabled = page === 1;
   $("next").disabled = data.results.length < PAGE_SIZE || page * PAGE_SIZE >= MAX_RESULTS;
@@ -72,6 +75,25 @@ function resultItem(result) {
     item.append(image);
   }
   return item;
+}
+
+// Info panel: shown when one of the top results is the page about what was searched (like a Wikipedia article).
+function showAbout(about) {
+  const panel = $("about");
+  if (about.image) {
+    const image = element("img", "about-image");
+    image.src = about.image;
+    image.alt = about.title;
+    image.referrerPolicy = "no-referrer";
+    image.onerror = () => image.remove();
+    panel.append(image);
+  }
+  panel.append(element("h2", "about-title", about.title));
+  if (about.summary) panel.append(element("p", "about-summary", about.summary));
+  const source = element("a", "about-source", `Read more on ${new URL(about.url).hostname.replace(/^www\./, "")} →`);
+  source.href = about.url;
+  panel.append(source);
+  panel.hidden = false;
 }
 
 function go(query, page = 1) {

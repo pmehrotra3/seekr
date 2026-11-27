@@ -72,10 +72,18 @@ class Result(BaseModel):
     signals: Signals
 
 
+class About(BaseModel):
+    title: str
+    url: str
+    image: str | None
+    summary: str | None
+
+
 class SearchResponse(BaseModel):
     query: str
     took_ms: int
     results: list[Result]
+    about: About | None = None  # an info panel when one result is the page about the query (first page only)
 
 
 class Page(BaseModel):
@@ -130,10 +138,12 @@ async def search_pages(
     key=Depends(api_key),
 ):
     started = time.perf_counter()
-    results = request.app.state.engine.search(q, limit=limit, offset=offset, site=site)
+    engine = request.app.state.engine
+    results = engine.search(q, limit=limit, offset=offset, site=site)
+    about = engine.about(q, results) if offset == 0 else None
     took_ms = round((time.perf_counter() - started) * 1000)
     log.info("search %r offset=%d site=%s -> %d results in %d ms", q, offset, site, len(results), took_ms)
-    return {"query": q, "took_ms": took_ms, "results": results}
+    return {"query": q, "took_ms": took_ms, "results": results, "about": about}
 
 
 @router.get("/page", response_model=Page)

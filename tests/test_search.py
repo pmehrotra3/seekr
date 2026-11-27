@@ -88,3 +88,33 @@ def test_pagerank_stage_breaks_ties_by_link_authority(engine):
     with_links = engine.search("pasta", mode="pagerank")
     assert {r["url"] for r in hybrid} == {r["url"] for r in with_links}  # same pages, maybe reordered
     assert with_links[0]["relevance"] is None  # no cross-encoder in this stage
+
+
+def test_snippet_text_drops_tables_and_footnote_marks():
+    text = "Adele | Born | 5 May 1988 | | Genres | Soul | Adele is a singer.[1] She sings.[edit]"
+    assert ranker.clean_text(text) == "Adele Adele is a singer. She sings."
+
+
+def test_main_title_and_summary():
+    assert ranker.main_title("Adele - Wikipedia") == "Adele"
+    assert ranker.main_title("Adele (given name) - Wikipedia") == "Adele (given name)"
+    assert ranker.main_title("Yosemite (U.S. National Park Service)", keep_brackets=False) == "Yosemite"
+    text = "Adele Appearance Adele Adkins is a singer. She was born in London. " + "More words here. " * 30
+    assert ranker.summary(text, title="Adele") == ranker.summary("Adele Adkins is a singer. She was born in London. "
+                                                                 + "More words here. " * 30)
+    assert ranker.summary(text, title="Adele").startswith("Adele Adkins is a singer. She was born in London.")
+    assert len(ranker.summary("word " * 200)) <= 320
+
+
+def test_info_panel_only_for_the_page_about_the_query(engine):
+    results = [{"title": "Pasta recipes", "url": "https://x.com/cooking", "image": None}]
+    about = engine.about("pasta recipes", results)
+    assert about["title"] == "Pasta recipes" and about["url"] == "https://x.com/cooking" and about["summary"]
+    assert engine.about("something else", results) is None
+
+
+def test_one_result_per_site_and_title():
+    pages = [{"url": "https://billboard.com/a", "title": "Taylor Swift | Billboard"},
+             {"url": "https://billboard.com/b", "title": "Taylor Swift | Billboard"},
+             {"url": "https://wikipedia.org/t", "title": "Taylor Swift | Billboard"}]
+    assert [page["url"] for page in ranker.one_per_title(pages)] == ["https://billboard.com/a", "https://wikipedia.org/t"]

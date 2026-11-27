@@ -48,6 +48,46 @@ def query_words(query):
     return re.findall(r"\w+", query.lower())
 
 
+TABLE = re.compile(r"(?:\|[^|]{0,80}){2,}\|")  # table rows flattened to text: "| Born | 5 May 1988 |"
+MARKERS = re.compile(r"\[(?:edit|\d{1,3}|[a-z])\]")  # Wikipedia's [edit] links and footnote marks like [1] or [a]
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
+
+
+def clean_text(text):
+    """Page text without table markup and footnote marks, for snippets and summaries."""
+    return " ".join(MARKERS.sub("", TABLE.sub(" ", text)).split())
+
+
+def main_title(title, keep_brackets=True):
+    """What a title names: 'Adele - Wikipedia' -> 'Adele'. Without brackets: 'Yosemite (Park Service)' -> 'Yosemite'."""
+    first = re.split(r" [-|–—·:] ", title or "")[0]
+    return " ".join((first if keep_brackets else re.sub(r"\([^)]*\)", " ", first)).split())
+
+
+def summary(text, title="", limit=320):
+    """Whole sentences from the start of a text, at most `limit` characters (or one sentence, cut).
+    A leading copy of the title and Wikipedia's "Appearance" menu label are skipped."""
+    text = text[len(title):].lstrip() if title and text.startswith(title) else text
+    text = text.removeprefix("Appearance ")
+    taken = ""
+    for sentence in SENTENCE_END.split(text):
+        if taken and len(taken) + len(sentence) > limit:
+            break
+        taken = f"{taken} {sentence}".strip()
+    return taken if len(taken) <= limit else taken[: limit - 1].rsplit(" ", 1)[0] + "…"
+
+
+def one_per_title(pages):
+    """Keep the best page of each site + title, e.g. one of an artist's many identically titled chart pages."""
+    seen, kept = set(), []
+    for page in pages:
+        key = (urlsplit(page["url"]).netloc, (page["title"] or page["url"]).lower())
+        if key not in seen:
+            seen.add(key)
+            kept.append(page)
+    return kept
+
+
 def highlight(text, query, width=300):
     """A window of text around the first query word, HTML-escaped, with query words wrapped in <mark>."""
     words = [re.escape(word) for word in query_words(query) if len(word) > 2 and word not in STOPWORDS]
@@ -146,14 +186,14 @@ class SearchEngine:
             pages.sort(key=lambda page: page["rrf"] + config.W_RRF_PAGERANK * self.pagerank.get(page["doc_id"], 0.0),
                        reverse=True)
         if mode == "full":
-            pages = self.rerank(query, pages[: config.RERANK_TOP])
+            pages = one_per_title(self.rerank(query, pages[: config.RERANK_TOP]))
         return [self.to_result(page, query) for page in pages[offset : offset + limit]]
 
     def to_result(self, page, query):
         return {
             "url": page["url"],
             "title": page["title"] or page["url"],
-            "snippet": highlight(page["text"], query),
+            "snippet": highlight(clean_text(page["text"]) or page["text"], query),
             "image": page["image"] or None,
             "relevance": page.get("relevance"),
             "final_score": page.get("final_score"),
@@ -166,3 +206,20 @@ class SearchEngine:
                 "site_authority": page.get("site_authority"),
             },
         }
+
+    def about(self, query, results):
+        """An info panel for the page that is *about* the query (its title is the query), from the top results."""
+        words = query_words(query)
+        exact = [r for r in results[:5] if query_words(main_title(r["title"])) == words]
+        loose = [r for r in results[:5] if query_words(main_title(r["title"], keep_brackets=False)) == words]
+        for result in exact + loose:  # "Adele - Wikipedia" before "Adele (given name)"
+            row = self.conn.execute("SELECT id, description FROM documents WHERE url = ?", (result["url"],)).fetchone()
+            text = row["description"] if row and len(row["description"] or "") >= 60 else ""
+            if not text and row:
+                chunks = self.conn.execute(
+                    "SELECT text FROM chunks WHERE doc_id = ? ORDER BY position LIMIT 2", (row["id"],)).fetchall()
+                text = clean_text(" ".join(chunk["text"] for chunk in chunks))
+            name = main_title(result["title"], keep_brackets=False)
+            return {"title": name, "url": result["url"], "image": result["image"],
+                    "summary": summary(text, main_title(result["title"])) or None}
+        return None

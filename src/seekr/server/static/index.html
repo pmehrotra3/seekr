@@ -88,13 +88,16 @@
   </main>
 
   <main id="results-view" hidden>
-    <p id="status" class="status" aria-live="polite"></p>
-    <ol id="results" class="results"></ol>
-    <nav id="pager" class="pager" hidden>
-      <button id="prev" type="button">← Previous</button>
-      <span id="page-label"></span>
-      <button id="next" type="button">Next →</button>
-    </nav>
+    <div class="results-column">
+      <p id="status" class="status" aria-live="polite"></p>
+      <ol id="results" class="results"></ol>
+      <nav id="pager" class="pager" hidden>
+        <button id="prev" type="button">← Previous</button>
+        <span id="page-label"></span>
+        <button id="next" type="button">Next →</button>
+      </nav>
+    </div>
+    <aside id="about" class="about-panel" hidden></aside>
   </main>
 
   <footer>
