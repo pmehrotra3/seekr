@@ -44,6 +44,17 @@ def test_crawl_follows_links_and_respects_robots(conn):
     assert titles == ["Home", "Page A"]
 
 
+def test_no_write_is_left_open_while_waiting_for_a_site(conn):
+    open_writes = []
+
+    def site(request):  # other programs (index, archive) can only write while the crawler has nothing open
+        open_writes.append(conn.in_transaction)
+        return fake_site(request)
+
+    run_crawl(conn, site)
+    assert len(open_writes) >= 4 and not any(open_writes)
+
+
 def test_crawl_stops_at_page_limit(conn, monkeypatch):
     monkeypatch.setattr(config, "MAX_PAGES_PER_DOMAIN", 1)
     assert list(run_crawl(conn).values()).count("done") == 1

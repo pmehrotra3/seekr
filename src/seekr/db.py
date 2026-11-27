@@ -200,8 +200,15 @@ def archive_pages(conn, dest, batch_size=2000):
             archive.executemany("INSERT OR REPLACE INTO pages VALUES (?, ?, ?, ?, ?, ?)",
                                 [(*row[1:5], html, row[6]) for row, html in zip(rows, htmls, strict=True)])
             archive.commit()  # safely in the archive before it leaves the crawl database
-            conn.executemany("UPDATE pages SET html = NULL WHERE rowid = ?", [(row[0],) for row in rows])
-            conn.commit()
+            for attempt in range(10):  # the crawler may be writing too: wait for it rather than give up
+                try:
+                    conn.executemany("UPDATE pages SET html = NULL WHERE rowid = ?", [(row[0],) for row in rows])
+                    conn.commit()
+                    break
+                except sqlite3.OperationalError:
+                    if attempt == 9:
+                        raise
+                    conn.rollback()
             moved += len(rows)
             print(f"  moved {moved} pages...", flush=True)
     archive.close()

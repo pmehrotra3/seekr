@@ -117,6 +117,7 @@ async def crawl_host(client, conn, host, scopes, until=None, budget=None):
         url, depth = row["url"], row["depth"]
         if not robots.can_fetch(config.USER_AGENT, url):
             db.mark(conn, url, "blocked")
+            conn.commit()  # before the next await: an open write would lock out other programs meanwhile
             continue
         status, final_url, html = await fetch(client, url)
         log.debug("%s %s", status, url)
