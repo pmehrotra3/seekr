@@ -43,6 +43,9 @@ CREATE TABLE IF NOT EXISTS documents (
     video        TEXT  -- embedded video (YouTube/Vimeo/og:video URL), '' if none, NULL if not looked for yet
 );
 CREATE INDEX IF NOT EXISTS documents_hash ON documents (content_hash);
+-- Refetching a page drops its old document, copies and chunks. Without these, each drop read every document
+-- and chunk (millions, with Wikipedia) while holding the write lock, locking out every other program.
+CREATE INDEX IF NOT EXISTS documents_duplicate ON documents (duplicate_of);
 
 CREATE TABLE IF NOT EXISTS chunks (
     id       INTEGER PRIMARY KEY,
@@ -50,6 +53,7 @@ CREATE TABLE IF NOT EXISTS chunks (
     position INTEGER NOT NULL,
     text     TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS chunks_doc ON chunks (doc_id);
 
 CREATE TABLE IF NOT EXISTS embeddings (
     chunk_id INTEGER PRIMARY KEY,
@@ -151,7 +155,8 @@ def host_stats(conn):
 
 def forget_document(conn, url):
     """Drop a page's document (and copies of it) with its chunks, keyword index and vectors; `index` redoes it."""
-    sql = "SELECT id FROM documents WHERE url = ? OR duplicate_of IN (SELECT id FROM documents WHERE url = ?)"
+    sql = ("SELECT id FROM documents WHERE url = ? UNION "  # UNION, not OR: each half uses its index
+           "SELECT id FROM documents WHERE duplicate_of IN (SELECT id FROM documents WHERE url = ?)")
     ids = [row[0] for row in conn.execute(sql, (url, url))]
     for doc_id in ids:
         chunk_ids = [(row[0],) for row in conn.execute("SELECT id FROM chunks WHERE doc_id = ?", (doc_id,))]

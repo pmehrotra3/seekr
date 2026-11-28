@@ -86,3 +86,14 @@ def test_page_video_finds_embedded_players():
     declared = '<meta property="og:video:secure_url" content="/media/talk.mp4">'
     assert extract.page_video(declared, "https://dev.example.com/talks/1") == "https://dev.example.com/media/talk.mp4"
     assert extract.page_video('<a href="https://youtube.com/@nasa">YouTube</a>', "") == ""  # a social link
+
+
+def test_dropping_a_document_uses_indexes_not_a_full_scan(tmp_path):
+    # Recrawling drops old documents while holding the write lock: a scan of millions of rows locked out other programs.
+    conn = db.connect(tmp_path / "t.db")
+    plans = [conn.execute("EXPLAIN QUERY PLAN " + sql, args).fetchall() for sql, args in (
+        ("SELECT id FROM documents WHERE url = ? UNION SELECT id FROM documents WHERE duplicate_of IN "
+         "(SELECT id FROM documents WHERE url = ?)", ("u", "u")),
+        ("SELECT id FROM chunks WHERE doc_id = ?", (1,)),
+        ("DELETE FROM chunks WHERE doc_id = ?", (1,)))]
+    assert not [step for plan in plans for step in plan if step[3].startswith("SCAN")]
