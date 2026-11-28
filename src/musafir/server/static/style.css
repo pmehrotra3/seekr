@@ -1,17 +1,18 @@
-/* Colors live in variables, so dark mode only swaps the variables. */
+/* Musafir's colors: saffron (the accent) on warm sand by day, on indigo night in dark mode.
+   Colors live in variables, so dark mode only swaps the variables. */
 :root {
-  --bg: #ffffff; --surface: #f3f5f9; --text: #1b2130; --muted: #5f6878; --line: #e3e7ee;
-  --accent: #2f6bff; --link: #1a4fd6; --mark: #fff1a8; --code: #0f1420; --code-text: #e6e9ef;
+  --bg: #fdfbf7; --surface: #f6f1e8; --text: #1f1a2e; --muted: #6b6375; --line: #ebe3d6;
+  --accent: #c2410c; --on-accent: #ffffff; --link: #4338ca; --mark: #ffe4bf; --code: #1f1a2e; --code-text: #f3ede4;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1218; --surface: #181d26; --text: #e6e9ef; --muted: #9aa4b2; --line: #272e3a;
-    --accent: #6f9bff; --link: #8ab4ff; --mark: #5a4a00; --code: #080a0f;
+    --bg: #14121c; --surface: #1e1b29; --text: #ece8f2; --muted: #a39cb0; --line: #2d2a3a;
+    --accent: #fb923c; --on-accent: #1a1206; --link: #a5b4fc; --mark: #5a3a10; --code: #0c0a12;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1218; --surface: #181d26; --text: #e6e9ef; --muted: #9aa4b2; --line: #272e3a;
-  --accent: #6f9bff; --link: #8ab4ff; --mark: #5a4a00; --code: #080a0f;
+  --bg: #14121c; --surface: #1e1b29; --text: #ece8f2; --muted: #a39cb0; --line: #2d2a3a;
+    --accent: #fb923c; --on-accent: #1a1206; --link: #a5b4fc; --mark: #5a3a10; --code: #0c0a12;
 }
 
 * { box-sizing: border-box; }
@@ -45,7 +46,7 @@ input {
 input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
 button {
   font: inherit; font-size: 15px; font-weight: 600; padding: 0 20px; min-height: 44px; cursor: pointer;
-  color: #fff; background: var(--accent); border: 0; border-radius: 999px;
+  color: var(--on-accent); background: var(--accent); border: 0; border-radius: 999px;
 }
 button:disabled { opacity: .45; cursor: default; }
 .theme { width: 40px; min-height: 40px; padding: 0; font-size: 18px; color: var(--text); background: var(--surface); border: 1px solid var(--line); }
