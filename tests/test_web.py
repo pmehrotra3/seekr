@@ -2,9 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from test_search import PAGES
 
-from seekr import db
-from seekr.index import bm25, embed, pagerank
-from seekr.server import api, web
+from musafir import db
+from musafir.index import bm25, embed, pagerank
+from musafir.server import api, web
 
 
 @pytest.fixture(scope="module")

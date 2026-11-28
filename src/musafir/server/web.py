@@ -7,8 +7,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from seekr import config
-from seekr.server import api
+from musafir import config
+from musafir.server import api
 
 
 class KeyRequest(BaseModel):

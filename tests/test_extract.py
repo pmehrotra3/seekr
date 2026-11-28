@@ -1,5 +1,5 @@
-from seekr import db
-from seekr.index import extract
+from musafir import db
+from musafir.index import extract
 
 ARTICLE = """<html lang="en-US"><head><title>Ownership - The Book</title></head><body>
 <nav><a href="/">Home</a> <a href="/about">About</a></nav>

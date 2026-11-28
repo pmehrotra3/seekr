@@ -15,4 +15,4 @@ jobs:
         with: {path: ~/.cache/huggingface, key: hf-models-v1}
       - run: ruff check .
       - run: python -m pytest -q
-        env: {SEEKR_DEVICE: cpu}
+        env: {MUSAFIR_DEVICE: cpu}

@@ -1,6 +1,6 @@
 import numpy as np
 
-from seekr.search import evaluate
+from musafir.search import evaluate
 
 
 def test_reciprocal_rank():

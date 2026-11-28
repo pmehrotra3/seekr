@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from seekr import db
-from seekr.index import bm25, embed, export, pagerank
+from musafir import db
+from musafir.index import bm25, embed, export, pagerank
 
 
 def make_crawl_db(path):

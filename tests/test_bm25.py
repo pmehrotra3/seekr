@@ -1,5 +1,5 @@
-from seekr import db
-from seekr.index import bm25
+from musafir import db
+from musafir.index import bm25
 
 
 def make_conn(tmp_path, pages):
@@ -48,7 +48,7 @@ def test_no_words_no_results(tmp_path):
 
 
 def test_index_is_built_in_batches(tmp_path):
-    from seekr import db
+    from musafir import db
 
     conn = db.connect(tmp_path / "t.db")
     conn.execute("INSERT INTO documents (id, url, title) VALUES (1, 'https://x.com', 'X')")

@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
-from seekr import config
+from musafir import config
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS frontier (
@@ -81,7 +81,7 @@ def connect(path=None):
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     columns = {row[1] for row in conn.execute("PRAGMA table_info(documents)")}
-    for column in ("image", "video"):  # databases made before Seekr kept images and videos
+    for column in ("image", "video"):  # databases made before Musafir kept images and videos
         if column not in columns:
             conn.execute(f"ALTER TABLE documents ADD COLUMN {column} TEXT")
     return conn
@@ -195,7 +195,7 @@ def archive_pages(conn, dest, batch_size=2000):
     sql = """SELECT p.rowid, p.url, p.final_url, p.status, p.title, p.html, p.fetched_at FROM pages p
              JOIN documents d ON d.url = p.url WHERE p.rowid > ? AND p.html IS NOT NULL ORDER BY p.rowid LIMIT ?"""
     moved, last = 0, 0
-    with ProcessPoolExecutor() as pool:  # compressing pages saved before Seekr compressed them is the slow part
+    with ProcessPoolExecutor() as pool:  # compressing pages saved before Musafir compressed them is the slow part
         while rows := conn.execute(sql, (last, batch_size)).fetchall():
             last = rows[-1][0]
             htmls = pool.map(_packed, [row[5] for row in rows], chunksize=50)

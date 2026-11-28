@@ -2,8 +2,8 @@ import os
 
 import numpy as np
 
-from seekr import db
-from seekr.index import embed
+from musafir import db
+from musafir.index import embed
 
 
 def test_similar_meanings_get_close_vectors():
@@ -76,7 +76,7 @@ def test_stale_snapshot_is_rebuilt(tmp_path):
 def test_cpu_threads_leave_room_on_big_hybrid_cpus():
     import torch
 
-    from seekr import config
+    from musafir import config
 
     assert 1 <= config.CPU_THREADS <= (os.cpu_count() or 1)
     assert torch.get_num_threads() == config.CPU_THREADS

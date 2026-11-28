@@ -1,7 +1,7 @@
 import httpx
 
-from seekr import config, db
-from seekr.crawl import dailymotion
+from musafir import config, db
+from musafir.crawl import dailymotion
 
 VIDEO = {"id": "x9abc", "title": "Shah Rukh Khan interview", "description": "On <b>Jawan</b> &amp; more",
          "tags": ["srk"], "thumbnail_720_url": "https://s1.dmcdn.net/v/x/x720", "created_time": 1795700000,

@@ -1,12 +1,12 @@
-"""`seekr export OUT.db`: a slim copy of the database with only what searching needs.
+"""`musafir export OUT.db`: a slim copy of the database with only what searching needs.
 
 The crawl database keeps the raw HTML of every page (most of its size) and the crawl queue. A server needs
 neither: it needs the searchable English pages, their chunks, keyword index, vectors, PageRank and site scores.
 """
 from pathlib import Path
 
-from seekr import db
-from seekr.index import bm25, embed, pagerank
+from musafir import db
+from musafir.index import bm25, embed, pagerank
 
 LOGO_PAGES = 20
 KEEP = "d.word_count > 0 AND d.duplicate_of IS NULL AND (IFNULL(d.language, '') = '' OR d.language LIKE 'en%')"

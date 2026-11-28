@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 
 import trafilatura
 
-from seekr import config, db
+from musafir import config, db
 
 HTML_LANG = re.compile(r"<html[^>]*\blang=[\"']?([a-zA-Z-]+)", re.IGNORECASE)
 PREVIEW_TAG = re.compile(r"<meta[^>]+(?:property|name)=[\"'](?:og:image|twitter:image)(?::src)?[\"'][^>]*>", re.I)
@@ -123,7 +123,7 @@ def index_pages(conn, batch_size=1000):
 
 
 def add_media(conn, batch_size=2000):
-    """Look up images and videos for documents indexed before Seekr kept them. Returns how many were checked."""
+    """Look up images and videos for documents indexed before Musafir kept them. Returns how many were checked."""
     sql = """SELECT d.id, p.html, p.final_url FROM documents d JOIN pages p ON p.url = d.url
              WHERE d.image IS NULL OR d.video IS NULL LIMIT ?"""
     total = 0

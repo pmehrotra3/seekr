@@ -1,4 +1,4 @@
-"""Command-line entry point: seekr <command>."""
+"""Command-line entry point: musafir <command>."""
 import argparse
 import asyncio
 import logging
@@ -8,13 +8,13 @@ import threading
 import time
 from pathlib import Path
 
-from seekr import config, db
-from seekr.crawl import crawler, dailymotion, discover
-from seekr.index import bm25, embed, export, extract, pagerank, wikipedia
-from seekr.search import evaluate, ranker
-from seekr.server import api, web
+from musafir import config, db
+from musafir.crawl import crawler, dailymotion, discover
+from musafir.index import bm25, embed, export, extract, pagerank, wikipedia
+from musafir.search import evaluate, ranker
+from musafir.server import api, web
 
-log = logging.getLogger("seekr.live")
+log = logging.getLogger("musafir.live")
 
 
 def print_host_stats(conn):
@@ -126,7 +126,7 @@ def cmd_eval(args):
 def cmd_serve(args):
     import uvicorn
 
-    print(f"Seekr on http://{config.HOST}:{config.PORT}  (search page: /, API docs: /docs)")
+    print(f"Musafir on http://{config.HOST}:{config.PORT}  (search page: /, API docs: /docs)")
     # Behind a reverse proxy, trust its X-Forwarded-For so rate limits see each visitor's real IP
     uvicorn.run(web.create_site(), host=config.HOST, port=config.PORT,
                 proxy_headers=True, forwarded_allow_ips=config.TRUSTED_PROXIES)
@@ -176,7 +176,7 @@ def cmd_dailymotion(args):
 def cmd_wikipedia(args):
     print(f"Articles from {args.dump}:")
     print(wikipedia.import_dump(db.connect(), args.dump, limit=args.limit))
-    print("Next: seekr index (keyword index and vectors), then seekr rank and seekr export.")
+    print("Next: musafir index (keyword index and vectors), then musafir rank and musafir export.")
 
 
 def cmd_archive(args):
@@ -218,7 +218,7 @@ def main(argv=None):
     # progress bars, one line per HTTP request, offline-mode notices
     for noisy in ("sentence_transformers", "httpx", "httpx2", "huggingface_hub"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
-    parser = argparse.ArgumentParser(prog="seekr", description="Seekr search engine")
+    parser = argparse.ArgumentParser(prog="musafir", description="Musafir search engine")
     sub = parser.add_subparsers(dest="command", required=True)
     for name in COMMANDS:
         command = sub.add_parser(name)

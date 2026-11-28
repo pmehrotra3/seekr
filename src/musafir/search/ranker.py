@@ -10,9 +10,9 @@ import numpy as np
 import torch
 from sentence_transformers import CrossEncoder
 
-from seekr import config
-from seekr.crawl import discover
-from seekr.index import bm25, embed
+from musafir import config
+from musafir.crawl import discover
+from musafir.index import bm25, embed
 
 CHUNK_SQL = """SELECT c.doc_id, c.text, d.url, d.title, d.published, d.language, d.word_count, d.image, d.video
                FROM chunks c JOIN documents d ON d.id = c.doc_id WHERE c.id = ?"""

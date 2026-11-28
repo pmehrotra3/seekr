@@ -1,4 +1,4 @@
-// Seekr's page: the landing page, the results view and free API key signup.
+// Musafir's page: the landing page, the results view and free API key signup.
 const PAGE_SIZE = 10;
 const MAX_RESULTS = 30; // the reranker scores the best 30 pages per query
 const KINDS = ["all", "images", "videos", "news"];
@@ -23,7 +23,7 @@ async function search(query, page, kind = "all") {
   document.body.classList.toggle("searching", query !== "");
   $("home").hidden = query !== "";
   $("results-view").hidden = query === "";
-  document.title = query ? `${query} - Seekr` : "Seekr: search without the noise";
+  document.title = query ? `${query} - Musafir` : "Musafir: search without the noise";
   $("results").replaceChildren();
   $("about").replaceChildren();
   $("about").hidden = true;
@@ -224,14 +224,14 @@ $("copy").addEventListener("click", async () => {
 // Dark mode: follow the system setting until the visitor picks one.
 const root = document.documentElement;
 try {
-  const saved = localStorage.getItem("seekr-theme");
+  const saved = localStorage.getItem("musafir-theme");
   if (saved) root.dataset.theme = saved;
 } catch (error) {} // storage can be blocked (private mode); the page still works
 document.querySelector(".theme").addEventListener("click", () => {
   const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
   root.dataset.theme = dark ? "light" : "dark";
   try {
-    localStorage.setItem("seekr-theme", root.dataset.theme);
+    localStorage.setItem("musafir-theme", root.dataset.theme);
   } catch (error) {}
 });
 

@@ -1,4 +1,4 @@
-from seekr.crawl.urls import build_scopes, in_scope, normalize_url
+from musafir.crawl.urls import build_scopes, in_scope, normalize_url
 
 
 def test_normalize_makes_links_absolute_and_clean():

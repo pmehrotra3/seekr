@@ -2,8 +2,8 @@ import importlib
 
 import pytest
 
-from seekr import config
-from seekr.__main__ import main
+from musafir import config
+from musafir.__main__ import main
 
 
 def test_read_seeds_skips_blanks_and_comments(tmp_path):
@@ -29,18 +29,18 @@ def test_unknown_command_fails():
 
 
 def test_contact_goes_into_the_user_agent(monkeypatch):
-    monkeypatch.setenv("SEEKR_CONTACT", "Ada Lovelace; ada@example.com")
+    monkeypatch.setenv("MUSAFIR_CONTACT", "Ada Lovelace; ada@example.com")
     try:
         importlib.reload(config)
-        assert config.USER_AGENT == "SeekrBot/0.1 (Ada Lovelace; ada@example.com)"
+        assert config.USER_AGENT == "MusafirBot/0.1 (Ada Lovelace; ada@example.com)"
     finally:
-        monkeypatch.delenv("SEEKR_CONTACT")
+        monkeypatch.delenv("MUSAFIR_CONTACT")
         importlib.reload(config)
-    assert config.USER_AGENT == "SeekrBot/0.1"
+    assert config.USER_AGENT == "MusafirBot/0.1"
 
 
 def test_crawl_seeds_option_crawls_only_that_file(tmp_path, monkeypatch):
-    from seekr.crawl import crawler
+    from musafir.crawl import crawler
 
     seeds = tmp_path / "new.txt"
     seeds.write_text("https://new.example/\n")

@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from seekr import db
-from seekr.index import bm25, embed, pagerank
-from seekr.search import ranker
+from musafir import db
+from musafir.index import bm25, embed, pagerank
+from musafir.search import ranker
 
 
 def test_rrf_rewards_agreement():

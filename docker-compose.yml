@@ -1,15 +1,15 @@
 # Serve:  docker compose up -d --build     then open http://localhost:8000
-# Needs:  data/serve.db and its snapshot files (seekr export data/serve.db)
-# Keys:   docker compose exec seekr seekr keys create NAME
+# Needs:  data/serve.db and its snapshot files (musafir export data/serve.db)
+# Keys:   docker compose exec musafir musafir keys create NAME
 services:
-  seekr:
+  musafir:
     build: .
     ports:
-      - "127.0.0.1:${SEEKR_HOST_PORT:-8000}:8000"  # localhost only: put a reverse proxy or tunnel in front
+      - "127.0.0.1:${MUSAFIR_HOST_PORT:-8000}:8000"  # localhost only: put a reverse proxy or tunnel in front
     volumes:
       - ./data:/app/data  # the index stays on your disk, outside the container
     environment:
-      SEEKR_LOG_LEVEL: INFO
-      SEEKR_CPU_THREADS: ${SEEKR_SERVE_THREADS:-}  # fewer threads stay fast when other work fills the CPU
+      MUSAFIR_LOG_LEVEL: INFO
+      MUSAFIR_CPU_THREADS: ${MUSAFIR_SERVE_THREADS:-}  # fewer threads stay fast when other work fills the CPU
     cpu_shares: 4096  # under load, searches get the CPU before other containers (default weight 1024)
     restart: unless-stopped

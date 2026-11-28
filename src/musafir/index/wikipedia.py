@@ -1,4 +1,4 @@
-"""`seekr wikipedia DUMP`: every article from Wikipedia's official dump, without crawling Wikipedia.
+"""`musafir wikipedia DUMP`: every article from Wikipedia's official dump, without crawling Wikipedia.
 
 Download enwiki-latest-pages-articles.xml.bz2 from https://dumps.wikimedia.org/enwiki/latest/. Each article keeps
 its opening paragraph, the facts in its infobox (born, occupation, starring...) and more of the article, up to
@@ -14,8 +14,8 @@ from xml.etree.ElementTree import iterparse
 
 import mwparserfromhell
 
-from seekr import config
-from seekr.index import extract
+from musafir import config
+from musafir.index import extract
 
 SKIP = re.compile(r"^(disambiguation|disambig|dab|hndis|geodis|set index|surname|given name)\b", re.I)
 DATE = re.compile(r"^(birth|death|start|end|film|release|launch)[ _-]?date", re.I)
@@ -140,12 +140,12 @@ def import_dump(conn, path, limit=None, batch_size=2000):
     known = {row[0] for row in conn.execute("SELECT url FROM documents WHERE url LIKE 'https://en.wikipedia.org/%'")}
     with ProcessPoolExecutor() as pool:  # parsing wikitext is the slow part: one article per core at a time
         for batch in batched(islice(articles(path), limit), batch_size):
-            docs = pool.map(to_document, batch, chunksize=25)
-            for (title, _), doc in zip(batch, docs, strict=True):
+            new = [item for item in batch if article_url(item[0]) not in known]  # resuming: don't parse saved ones
+            counts["known"] += len(batch) - len(new)
+            docs = pool.map(to_document, new, chunksize=25)
+            for (title, _), doc in zip(new, docs, strict=True):
                 url = article_url(title)
-                if url in known:
-                    counts["known"] += 1
-                elif doc is None:
+                if doc is None:
                     counts["skipped"] += 1
                 else:
                     counts[extract.save_document(conn, url, doc)] += 1

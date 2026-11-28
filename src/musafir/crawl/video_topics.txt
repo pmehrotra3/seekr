@@ -1,4 +1,4 @@
-# `seekr dailymotion --topics`: one search per line, best matches from verified publishers.
+# `musafir dailymotion --topics`: one search per line, best matches from verified publishers.
 # Indian cinema
 Bollywood
 Shah Rukh Khan

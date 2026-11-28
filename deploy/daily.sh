@@ -1,17 +1,17 @@
 #!/bin/sh
 # One day of crawling, then the fresh index goes live (about 10 seconds of downtime).
-# Limits: SEEKR_NEW_PAGES_PER_DAY and SEEKR_RECRAWL_PER_DAY (see src/seekr/config.py).
-# Run it from cron, e.g.:  17 3 * * *  /path/to/seekr/deploy/daily.sh > /path/to/seekr/data/daily.log 2>&1
+# Limits: MUSAFIR_NEW_PAGES_PER_DAY and MUSAFIR_RECRAWL_PER_DAY (see src/musafir/config.py).
+# Run it from cron, e.g.:  17 3 * * *  /path/to/musafir/deploy/daily.sh > /path/to/musafir/data/daily.log 2>&1
 set -eu
 cd "$(dirname "$0")/.."
-if [ -f .env ]; then set -a; . ./.env; set +a; fi  # local settings, e.g. SEEKR_ARCHIVE_DB on an external disk
+if [ -f .env ]; then set -a; . ./.env; set +a; fi  # local settings, e.g. MUSAFIR_ARCHIVE_DB on an external disk
 # cron starts with almost no environment: find docker and talk to the daemon that runs the site
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 export DOCKER_HOST="${DOCKER_HOST:-unix:///var/run/docker.sock}"
-export SEEKR_MAX_PAGES_PER_DOMAIN="${SEEKR_MAX_PAGES_PER_DOMAIN:-20000}"
+export MUSAFIR_MAX_PAGES_PER_DOMAIN="${MUSAFIR_MAX_PAGES_PER_DOMAIN:-20000}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"  # lets cron ask about user services
-if systemctl --user is-active --quiet seekr-crawler 2>/dev/null; then
-  export SEEKR_NEW_PAGES_PER_DAY=0  # the crawler service fetches new pages all day; this run indexes them
+if systemctl --user is-active --quiet musafir-crawler 2>/dev/null; then
+  export MUSAFIR_NEW_PAGES_PER_DAY=0  # the crawler service fetches new pages all day; this run indexes them
 fi
 
 # Only one refresh at a time: a second copy started meanwhile exits instead of clashing.
@@ -21,7 +21,7 @@ if ! flock -n 9; then
   exit 0
 fi
 
-.venv/bin/seekr daily data/serve-next.db
+.venv/bin/musafir daily data/serve-next.db
 if [ -s data/serve-next.db-wal ]; then  # the export did not close cleanly: keep serving the old index
   echo "data/serve-next.db is incomplete; not swapping" >&2
   exit 1

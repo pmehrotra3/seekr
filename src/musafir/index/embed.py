@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
 
-from seekr import config
+from musafir import config
 
 torch.set_num_threads(config.CPU_THREADS)
 

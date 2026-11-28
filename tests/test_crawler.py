@@ -3,8 +3,8 @@ import asyncio
 import httpx
 import pytest
 
-from seekr import config, db
-from seekr.crawl import crawler
+from musafir import config, db
+from musafir.crawl import crawler
 
 # A tiny fake website. Each path maps to (status, content type, body).
 SITE = {
@@ -133,7 +133,7 @@ def test_unreachable_robots_skips_the_host_for_now(conn):
 def test_hosts_with_unreachable_robots_are_logged_and_skipped(tmp_path, caplog):
     conn = db.connect(tmp_path / "t.db")
     down = httpx.MockTransport(lambda request: httpx.Response(503))
-    with caplog.at_level("WARNING", logger="seekr.crawl.crawler"):
+    with caplog.at_level("WARNING", logger="musafir.crawl.crawler"):
         asyncio.run(crawler.crawl(["https://example.com/"], conn, transport=down))
     assert "example.com: robots.txt unreachable" in caplog.text
 
@@ -149,7 +149,7 @@ def test_a_daily_budget_caps_new_pages_across_all_hosts(conn):
 
 
 def test_recrawl_refreshes_changed_pages_and_removes_gone_ones(conn):
-    from seekr.index import bm25, embed, extract
+    from musafir.index import bm25, embed, extract
 
     for url in ("https://example.com/a", "https://example.com/gone"):
         db.save_page(conn, url, url, 200, "Old", "<title>Old</title><p>" + "old words here " * 40 + "</p>", [])

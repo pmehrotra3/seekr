@@ -1,0 +1,22 @@
+# Crawl nonstop on four low-power cores, as a user service:
+#   sed "s#/path/to/musafir#$PWD#g" deploy/musafir-crawler.service > ~/.config/systemd/user/musafir-crawler.service
+#   systemctl --user daemon-reload && systemctl --user enable --now musafir-crawler
+# Logs: journalctl --user -u musafir-crawler -f
+[Unit]
+Description=Musafir crawler (nonstop)
+After=network-online.target
+
+[Service]
+WorkingDirectory=/path/to/musafir
+EnvironmentFile=-/path/to/musafir/.env
+Environment=MUSAFIR_MAX_PAGES_PER_DOMAIN=20000 MUSAFIR_MAX_DEPTH=5
+ExecStart=/path/to/musafir/.venv/bin/musafir crawl --forever
+# Core Ultra 9 285H: CPUs 12-13 are efficiency cores, 14-15 low-power efficiency cores. Change for other CPUs.
+CPUAffinity=12-15
+Nice=10
+IOSchedulingClass=idle
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

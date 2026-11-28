@@ -4,7 +4,7 @@ import math
 import time
 from pathlib import Path
 
-from seekr import config
+from musafir import config
 
 QUERIES_FILE = config.PACKAGE / "search" / "queries.jsonl"
 # hybrid = BM25 + vectors fused with RRF; pagerank = hybrid + link authority; full = + cross-encoder + final score

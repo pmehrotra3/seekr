@@ -1,4 +1,4 @@
-"""REST API: search Seekr from any program, with API keys and a rate limit per key."""
+"""REST API: search Musafir from any program, with API keys and a rate limit per key."""
 import hashlib
 import logging
 import secrets
@@ -15,10 +15,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from seekr import config, db
-from seekr.crawl.urls import normalize_url
-from seekr.index import embed
-from seekr.search import ranker
+from musafir import config, db
+from musafir.crawl.urls import normalize_url
+from musafir.index import embed
+from musafir.search import ranker
 
 log = logging.getLogger(__name__)
 KEYS_SCHEMA = """CREATE TABLE IF NOT EXISTS api_keys (
@@ -196,7 +196,7 @@ async def add_seeds(body: Seeds, key=Depends(admin_key)):
     added = [url for url in dict.fromkeys(urls) if url not in known]
     with open(config.SEEDS_FILE, "a") as seeds_file:
         seeds_file.writelines(f"{url}\n" for url in added)
-    return {"added": added, "next": "seekr crawl && seekr index && seekr rank"}
+    return {"added": added, "next": "musafir crawl && musafir index && musafir rank"}
 
 
 def create_app(db_path=None, keys_path=None):
@@ -211,7 +211,7 @@ def create_app(db_path=None, keys_path=None):
         app.state.conn.close()
         app.state.keys.close()
 
-    app = FastAPI(title="Seekr API", version="0.1", lifespan=lifespan)
+    app = FastAPI(title="Musafir API", version="0.1", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["GET", "POST"],
                        allow_headers=["Authorization", "Content-Type"])
     app.include_router(router)

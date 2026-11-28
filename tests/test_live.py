@@ -1,10 +1,10 @@
 import sqlite3
 import time
 
-from seekr import __main__ as cli
-from seekr import config, db
-from seekr.index import embed, extract, pagerank
-from seekr.search import ranker
+from musafir import __main__ as cli
+from musafir import config, db
+from musafir.index import embed, extract, pagerank
+from musafir.search import ranker
 
 
 def add_page(conn, doc_id, text):

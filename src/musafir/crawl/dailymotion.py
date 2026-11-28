@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 
 import httpx
 
-from seekr import config
-from seekr.index import extract
+from musafir import config
+from musafir.index import extract
 
 API = "https://api.dailymotion.com/videos"
 FIELDS = "id,title,description,tags,thumbnail_720_url,created_time,owner.screenname,language"

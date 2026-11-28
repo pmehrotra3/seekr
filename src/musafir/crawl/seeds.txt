@@ -1,4 +1,4 @@
-# Seekr seeds: a general web search engine. One URL per line; the crawler stays inside each seed's folder.
+# Musafir seeds: a general web search engine. One URL per line; the crawler stays inside each seed's folder.
 https://docs.python.org/3/
 https://developer.mozilla.org/en-US/docs/Web
 https://fastapi.tiangolo.com/
@@ -100,7 +100,7 @@ https://ocw.mit.edu/
 https://www.nps.gov/
 https://www.nhs.uk/conditions/
 https://www.lonelyplanet.com/
-# Wikimedia (needs SEEKR_CONTACT: their policy requires contact info in the User-Agent)
+# Wikimedia (needs MUSAFIR_CONTACT: their policy requires contact info in the User-Agent)
 https://en.wikipedia.org/wiki/Main_Page
 https://en.wikipedia.org/wiki/Adele
 https://en.wikivoyage.org/wiki/Main_Page

@@ -3,8 +3,8 @@ import time
 
 import httpx
 
-from seekr import db
-from seekr.crawl import crawler, discover
+from musafir import db
+from musafir.crawl import crawler, discover
 
 # Fake sites for the discovery checks: host -> {path: (status, body)}
 SITES = {

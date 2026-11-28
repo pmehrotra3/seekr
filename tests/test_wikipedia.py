@@ -1,7 +1,7 @@
 import bz2
 
-from seekr import db
-from seekr.index import wikipedia
+from musafir import db
+from musafir.index import wikipedia
 
 ACTOR = """{{Short description|Indian actor}}
 {{Infobox person
@@ -64,8 +64,8 @@ def test_article_urls_match_wikipedias():
 
 
 def test_each_article_is_one_chunk():
-    from seekr import config
-    from seekr.index import extract
+    from musafir import config
+    from musafir.index import extract
 
     long_article = ACTOR.replace("He is known", "He is known " + "and famous " * 400)
     doc = wikipedia.to_document(("Shah Rukh Khan", long_article))

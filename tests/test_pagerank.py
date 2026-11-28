@@ -1,7 +1,7 @@
 import numpy as np
 
-from seekr import db
-from seekr.index import pagerank
+from musafir import db
+from musafir.index import pagerank
 
 
 def test_cycle_gives_equal_scores():
